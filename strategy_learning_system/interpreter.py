@@ -110,7 +110,14 @@ class Interpreter:
 		# MAKE HEATMAPS HERE
 
 
+if __name__ == '__main__':
+	e = Experiment(' test name 1 ')
+	
+	e.name = ' test name 2 '
 
+	e.model = './', 'util.py'
+
+	print(e.model)
 
 
 
