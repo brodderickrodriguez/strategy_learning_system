@@ -91,7 +91,7 @@ class Interpreter:
 
 	# TODO: incomplete
 	# here run EMA
-	def establish_context(self, resolution_ model, um_experiments, max_run_length, num_replications, num_processes=1):
+	def establish_context(self, resolution_model, num_experiments, max_run_length, num_repititions, num_processes):
 		# make sure the user has first specified the model
 		try:
 			assert self._model
