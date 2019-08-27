@@ -4,3 +4,6 @@
 
 
 # TODO: HOUSE EMA DATA
+
+class Context:
+	pass
