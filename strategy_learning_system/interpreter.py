@@ -16,7 +16,10 @@ class Interpreter:
 		self.feature_model = None
 
 	def __str__(self):
-		return self.name
+		try:
+			return self.name
+		except AttributeError:
+			return str(self.created_on)
 
 	def __repr__(self):
 		return self.__str__()
