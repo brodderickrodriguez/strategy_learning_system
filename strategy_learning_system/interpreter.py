@@ -13,6 +13,8 @@ class Interpreter:
 		if not from_file:
 			self.created_on = datetime.datetime.now()
 
+		self.feature_model = None
+
 	def __str__(self):
 		return self.name
 
