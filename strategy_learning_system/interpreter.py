@@ -4,6 +4,7 @@
 
 import os
 import datetime
+import pickle
 
 
 class Interpreter:
@@ -89,7 +90,8 @@ class Interpreter:
 		return Experiment(from_file=True)
 
 	# TODO: incomplete
-	def execute_model(self, number_experiments, max_run_length, replications, processes):
+	# here run EMA
+	def establish_context(self, resolution_ model, um_experiments, max_run_length, num_replications, num_processes=1):
 		# make sure the user has first specified the model
 		try:
 			assert self._model
@@ -110,7 +112,7 @@ class Interpreter:
 		# CHECK KWARGS AGAINST LEARNED INFORMATION HERE
 
 	# TODO: incomplete
-	def interpret(self):
+	def explain(self):
 		pass
 		# MAKE HEATMAPS HERE
 
