@@ -5,6 +5,14 @@
 import os
 import datetime
 import pickle
+import ema_workbench
+from . import model_executor
+import copy
+
+
+IntegerParameter = ema_workbench.IntegerParameter
+
+TimeSeriesOutcome = ema_workbench.TimeSeriesOutcome
 
 
 class Interpreter:
@@ -14,6 +22,9 @@ class Interpreter:
 		if not from_file:
 			self.created_on = datetime.datetime.now()
 
+		# TODO: replace these using only the feature model
+		self.uncertainties = None
+		self.outcomes = None
 		self.feature_model = None
 
 	def __str__(self):
@@ -52,11 +63,16 @@ class Interpreter:
 		if model_dir[-1] != '/':
 			model_dir += '/'
 
-		# make sure that the model_dir is valid
-		assert os.path.exists(model_dir)
+		model_dir = (model_dir + '/').replace('//', '/')
 
-		# make sure that the model_file exists
-		assert os.path.isfile(model_dir + model_name)
+		try:
+			# make sure that the model_dir is valid
+			assert os.path.exists(model_dir)
+
+			# make sure that the model_file exists
+			assert os.path.isfile(model_dir + model_name)
+		except AssertionError:
+			raise AttributeError('Interpreter.model is not a valid file')
 
 		# finally save the model info
 		self._model = {'dir': model_dir, 'name': model_name}
@@ -79,7 +95,7 @@ class Interpreter:
 		try:
 			assert self._save_location
 		except AttributeError:
-			raise AttributeError('first specify the Experiment.save_location')
+			raise AttributeError('first specify the Interpreter.save_location')
 		
 		pass
 		# SAVE STUFF HERE
@@ -91,15 +107,20 @@ class Interpreter:
 
 	# TODO: incomplete
 	# here run EMA
-	def establish_context(self, resolution_model, num_experiments, max_run_length, num_repititions, num_processes):
+	def evaluate_context(self, resolution_model, num_experiments, max_run_length, num_repititions, num_processes):
 		# make sure the user has first specified the model
 		try:
 			assert self._model
 		except:
-			raise AttributeError('first specify the Experiment.model')
+			raise AttributeError('first specify the Interpreter.model')
 
-		pass
-		# RUN EMA HERE
+		resolution_model = (self.uncertainties, self.outcomes)
+		model_info = copy.deepcopy(self.model)
+		model_info['inter_name'] = self.name
+
+		data = model_executor.execute(model_info, resolution_model, num_experiments, max_run_length, num_repititions, num_processes)
+
+		print('testing context')
 
 	# TODO: incomplete
 	def learn(self):
@@ -115,30 +136,3 @@ class Interpreter:
 	def explain(self):
 		pass
 		# MAKE HEATMAPS HERE
-
-
-if __name__ == '__main__':
-	e = Experiment(' test name 1 ')
-	
-	e.name = ' test name 2 '
-
-	e.model = './', 'util.py'
-
-	print(e.model)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
