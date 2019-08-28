@@ -7,6 +7,7 @@ import ema_workbench
 from ema_workbench.connectors.netlogo import NetLogoModel
 from ema_workbench import ema_logging, MultiprocessingEvaluator
 
+
 NETLOGO_HOME = '/home/bcr/apps/netlogo'
 
 
