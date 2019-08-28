@@ -60,9 +60,6 @@ class Interpreter:
 			return
 
 		# if the last char in model_dir is not backslash then append it
-		if model_dir[-1] != '/':
-			model_dir += '/'
-
 		model_dir = (model_dir + '/').replace('//', '/')
 
 		try:
@@ -72,7 +69,7 @@ class Interpreter:
 			# make sure that the model_file exists
 			assert os.path.isfile(model_dir + model_name)
 		except AssertionError:
-			raise AttributeError('Interpreter.model is not a valid file')
+			raise AttributeError('Interpreter.model: {} is not a valid file'.format(model_dir + model_name))
 
 		# finally save the model info
 		self._model = {'dir': model_dir, 'name': model_name}
