@@ -4,10 +4,11 @@
 
 import os
 import datetime
-import pickle
 import ema_workbench
-from . import model_executor
+from . import model_executor, util
+
 import copy
+import json
 
 
 IntegerParameter = ema_workbench.IntegerParameter
@@ -20,7 +21,7 @@ class Interpreter:
 		self.name = name
 
 		if not from_file:
-			self.created_on = datetime.datetime.now()
+			self.created_on = str(datetime.datetime.now())
 
 		# TODO: replace these using only the feature model
 		self.uncertainties = None
@@ -60,7 +61,7 @@ class Interpreter:
 			return
 
 		# if the last char in model_dir is not backslash then append it
-		model_dir = (model_dir + '/').replace('//', '/')
+		model_dir = util.clean_dir(model_dir + '/')
 
 		try:
 			# make sure that the model_dir is valid
@@ -84,7 +85,10 @@ class Interpreter:
 		assert os.path.exists(save_dir)
 
 		# save the save_location
-		self._save_location = save_dir
+		self._save_location = util.clean_dir(save_dir)
+
+		# save the current Interpreter definition
+		self.save()
 
 	# TODO: incomplete
 	def save(self):
@@ -94,13 +98,46 @@ class Interpreter:
 		except AttributeError:
 			raise AttributeError('first specify the Interpreter.save_location')
 		
-		pass
-		# SAVE STUFF HERE
+		root_dir_path = util.clean_dir('{}/{}'.format(self.save_location, self.name))	
+		contexts_path =  root_dir_path + '/contexts'
+		metadata_path = root_dir_path + '/metadata.json'
+
+		# create root data directory
+		if not os.path.exists(root_dir_path):
+			os.mkdir(root_dir_path)
+
+		# create contexts dir
+		if not os.path.exists(contexts_path):
+			os.mkdir(contexts_path)
+
+		# save the metadata
+		with open(metadeta_path, 'w') as f:
+			_d = copy.deepcopy(self.__dict__)
+			del _d['uncertainties']
+			del _d['outcomes']
+			f.write(json.dumps(_d))
+
+		# save contexts here
 
 	# TODO: incomplete
 	@staticmethod
-	def load(file):
-		return Experiment(from_file=True)
+	def load(root_dir_path):
+		# make sure root_dir_path is valid
+		assert os.path.exists(root_dir_path)
+
+		# define the path to a Interpreter's metadata
+		metadata_path = root_dir_path + '/metadata.json'
+
+		# create an Interpreter object
+		inter = Interpreter(from_file=True)
+
+		# load and assign the metadata 
+		with open(metadata_path, 'r') as f:
+			inter.__dict__ = json.load(f)
+
+		# load contexts here
+
+		return inter
 
 	# TODO: incomplete
 	# here run EMA
