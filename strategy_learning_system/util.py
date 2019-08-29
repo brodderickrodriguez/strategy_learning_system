@@ -18,3 +18,8 @@ def load_results(data_dir):
 
     # return tuple containing the experiments and outcomes 
     return exp_df, out_dict
+
+
+def clean_dir(dir):
+	d = dir.replace('//', '/')
+	return d
