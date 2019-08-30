@@ -3,30 +3,20 @@
 # 24 Aug. 2019
 
 import os
-import datetime
-import ema_workbench
-from . import model_executor, util
-
 import copy
 import json
+import pickle
+import datetime
+from . import model_synthesizer, util
+from .feature_model import FeatureModel
 
 
-IntegerParameter = ema_workbench.IntegerParameter
-
-TimeSeriesOutcome = ema_workbench.TimeSeriesOutcome
-
-
-class Interpreter:
+class ModelMediator:
 	def __init__(self, name=None, from_file=False):
 		self.name = name
 
 		if not from_file:
 			self.created_on = str(datetime.datetime.now())
-
-		# TODO: replace these using only the feature model
-		self.uncertainties = None
-		self.outcomes = None
-		self.feature_model = None
 
 	def __str__(self):
 		try:
@@ -70,10 +60,18 @@ class Interpreter:
 			# make sure that the model_file exists
 			assert os.path.isfile(model_dir + model_name)
 		except AssertionError:
-			raise AttributeError('Interpreter.model: {} is not a valid file'.format(model_dir + model_name))
+			raise AttributeError('Mediator.model: {} is not a valid file'.format(model_dir + model_name))
 
 		# finally save the model info
 		self._model = {'dir': model_dir, 'name': model_name}
+
+	@property
+	def feature_model(self):
+		return self._feature_model
+
+	@feature_model.setter
+	def feature_model(self, v):
+		self._feature_model = v
 
 	@property
 	def save_location(self):
@@ -87,7 +85,7 @@ class Interpreter:
 		# save the save_location
 		self._save_location = util.clean_dir(save_dir)
 
-		# save the current Interpreter definition
+		# save the current Mediator definition
 		self.save()
 
 	# TODO: incomplete
@@ -96,11 +94,12 @@ class Interpreter:
 		try:
 			assert self._save_location
 		except AttributeError:
-			raise AttributeError('first specify the Interpreter.save_location')
+			raise AttributeError('first specify the Mediator.save_location')
 		
 		root_dir_path = util.clean_dir('{}/{}'.format(self.save_location, self.name))	
 		contexts_path =  root_dir_path + '/contexts'
-		metadata_path = root_dir_path + '/metadata.json'
+		meta_data_path = root_dir_path + '/meta_data.json'
+		feature_model_path = root_dir_path + '/feature_model.json'
 
 		# create root data directory
 		if not os.path.exists(root_dir_path):
@@ -110,12 +109,20 @@ class Interpreter:
 		if not os.path.exists(contexts_path):
 			os.mkdir(contexts_path)
 
-		# save the metadata
-		with open(metadeta_path, 'w') as f:
-			_d = copy.deepcopy(self.__dict__)
-			del _d['uncertainties']
-			del _d['outcomes']
-			f.write(json.dumps(_d))
+		# save the meta_data
+		with open(meta_data_path, 'w') as f:
+			meta_data_dict = copy.deepcopy(self.__dict__)
+
+			if '_feature_model' in meta_data_dict:
+				del meta_data_dict['_feature_model']
+
+			f.write(json.dumps(meta_data_dict))
+
+		# save feature model
+		if hasattr(self, '_feature_model'):
+			with open(feature_model_path, 'w') as f:
+				feature_model_dict = self.feature_model.to_dict()
+				f.write(json.dumps(feature_model_dict))
 
 		# save contexts here
 
@@ -125,19 +132,23 @@ class Interpreter:
 		# make sure root_dir_path is valid
 		assert os.path.exists(root_dir_path)
 
-		# define the path to a Interpreter's metadata
-		metadata_path = root_dir_path + '/metadata.json'
+		# define the path to a Mediator's meta_data
+		meta_data_path = root_dir_path + '/meta_data.json'
+		feature_model_path = root_dir_path + '/feature_model.json'
 
-		# create an Interpreter object
-		inter = Interpreter(from_file=True)
+		# create an Mediator object
+		med = ModelMediator(from_file=True)
 
-		# load and assign the metadata 
-		with open(metadata_path, 'r') as f:
-			inter.__dict__ = json.load(f)
+		# load and assign the meta_data 
+		with open(meta_data_path, 'r') as f:
+			med.__dict__ = json.load(f)
+
+		# load feature model here
+		med.feature_model = FeatureModel.from_file(feature_model_path)
 
 		# load contexts here
 
-		return inter
+		return med
 
 	# TODO: incomplete
 	# here run EMA
@@ -145,12 +156,12 @@ class Interpreter:
 		# make sure the user has first specified the model
 		try:
 			assert self._model
-		except:
-			raise AttributeError('first specify the Interpreter.model')
+		except AttributeError:
+			raise AttributeError('first specify the Mediator.model')
 
 		resolution_model = (self.uncertainties, self.outcomes)
 		model_info = copy.deepcopy(self.model)
-		model_info['inter_name'] = self.name
+		model_info['med_name'] = self.name
 
 		data = model_executor.execute(model_info, resolution_model, num_experiments, max_run_length, num_repititions, num_processes)
 
