@@ -4,9 +4,8 @@
 
 
 from .context import Context
-from .interpreter import Interpreter
-from . import model_executor 
+from .model_mediator import ModelMediator
+from .feature_model import (FeatureModel, IntegerParameter, TimeSeriesOutcome)
+from . import model_synthesizer 
 from . import learn
 from . import explain
-
-from .interpreter import (IntegerParameter, TimeSeriesOutcome)
