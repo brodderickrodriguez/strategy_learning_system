@@ -46,6 +46,16 @@ class FeatureModel:
 	def constraints(self, v):
 		self._outcomes = v
 
+	def get(self, attr):
+		pass
+
+	def __getitem__(self, key):
+		print('getting ', key)
+
+	def __iter__(self):
+		_all = (self.model_uncertainties + self.environmental_uncertainties + self.outcomes)
+		return _all.__iter__()
+
 	def to_dict(self):
 		d = copy.deepcopy(self.__dict__)
 		for key, val in d.items():
@@ -59,8 +69,7 @@ class FeatureModel:
 
 		fm = FeatureModel()
 
-		fm.all_outcomes = [TimeSeriesOutcome(o['name']) 
-							for o in fdr['_outcomes']]
+		fm.outcomes = [TimeSeriesOutcome(o['name'])  for o in fdr['_outcomes']]
 
 		fm.environmental_uncertainties = [IntegerParameter(o['name'], o['lower_bound'], o['upper_bound']) 
 											for o in fdr['_environmental_uncertainties']]
