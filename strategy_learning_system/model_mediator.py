@@ -5,24 +5,26 @@
 import os
 import copy
 import json
-import pickle
-import datetime
 from . import model_synthesizer, util
 from .feature_model import FeatureModel
+from .context import Context
 
 
 class ModelMediator:
 	def __init__(self, name=None, from_file=False):
 		self.name = name
+		self._contexts = []
 
 		if not from_file:
-			self.created_on = str(datetime.datetime.now())
+			self.created_on = util.datetime_str()
 
 	def __str__(self):
 		try:
-			return self.name
+			n =  self.name
 		except AttributeError:
-			return str(self.created_on)
+			n = str(self.created_on)
+
+		return 'Mediator: {}'.format(n)
 
 	def __repr__(self):
 		return self.__str__()
@@ -124,7 +126,9 @@ class ModelMediator:
 				feature_model_dict = self.feature_model.to_dict()
 				f.write(json.dumps(feature_model_dict))
 
-		# save contexts here
+		# save contexts
+		for ctx in self._contexts:
+			ctx.save(contexts_path)
 
 	# TODO: incomplete
 	@staticmethod
@@ -135,6 +139,7 @@ class ModelMediator:
 		# define the path to a Mediator's meta_data
 		meta_data_path = root_dir_path + '/meta_data.json'
 		feature_model_path = root_dir_path + '/feature_model.json'
+		contexts_path =  root_dir_path + '/contexts'
 
 		# create an Mediator object
 		med = ModelMediator(from_file=True)
@@ -143,39 +148,51 @@ class ModelMediator:
 		with open(meta_data_path, 'r') as f:
 			med.__dict__ = json.load(f)
 
-		# load feature model here
+		# load feature model
 		med.feature_model = FeatureModel.from_file(feature_model_path)
 
-		# load contexts here
+		# load contexts
+		for cxt_name in os.listdir(contexts_path):
+			cxt_path = '{}/{}'.format(contexts_path, cxt_name)
+			cxt = Context.load(cxt_path)
+			med._contexts.append(cxt)
 
 		return med
 
-	# TODO: incomplete
-	# here run EMA
-	def evaluate_context(self, resolution_model, num_experiments, max_run_length, num_repititions, num_processes):
-		# make sure the user has first specified the model
-		try:
-			assert self._model
-		except AttributeError:
-			raise AttributeError('first specify the Mediator.model')
+	def evaluate_context(self, cxt):
+		# make sure cxt is of time Context
+		if not isinstance(cxt, Context):
+			raise ValueError('{} is not of type Context'.format(cxt))
 
-		resolution_model = (self.uncertainties, self.outcomes)
-		model_info = copy.deepcopy(self.model)
-		model_info['med_name'] = self.name
+		# name sure the cxt name is unique
+		if True in [cxt.name == o.name for o in self._contexts]:
+			raise NameError('a context with then name {} already exists'.format(cxt.name))
 
-		data = model_executor.execute(model_info, resolution_model, num_experiments, max_run_length, num_repititions, num_processes)
+		# make sure all model attributes in the resolution model are 
+		# present in the feature model as well
+		for attr in cxt.resolution_model:
+			if attr not in self.feature_model:
+				raise ValueError('{} is not present in the FeatureModel'.format(attr))
 
-		print('testing context')
+		# save this context 
+		contexts_path = util.clean_dir('{}/{}/contexts/'.format(self.save_location, self.name))	
+		cxt.save(contexts_path)
+
+		# add the context to this mediator
+		self._contexts.append(cxt)
+
+		# call the synthesizer to collect model data
+		results = model_synthesizer.synthesize(self, cxt)
+
+		# TODO: this can maybe be moved to 
+		# save the synthesized data to the context object
+		cxt.synthesized_data = results
+	
 
 	# TODO: incomplete
 	def learn(self):
 		pass
 		# RUN XCS HERE
-
-	# TODO: incomplete
-	def predict(self, **kwargs):
-		pass
-		# CHECK KWARGS AGAINST LEARNED INFORMATION HERE
 
 	# TODO: incomplete
 	def explain(self):
