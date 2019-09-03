@@ -38,7 +38,6 @@ def define_feature_model():
 
 def create():
 	model_dir = ROOT + '/CODE/NetLogo/prey_predator_nlogo'
-
 	med = sls.ModelMediator(name=NAME)
 	med.model = (model_dir, 'preypred.nlogo')
 	med.feature_model = define_feature_model()
@@ -46,13 +45,20 @@ def create():
 	return med 	
 
 
-def load():
-	med = sls.ModelMediator.load(SAVE_LOC + '/' + NAME)
-	return med
+def main():
+	# mediator = create()
+	mediator = sls.ModelMediator.load(SAVE_LOC + '/' + NAME)
+	print(mediator)
+
+	print(mediator._contexts)
+
+	context1 = sls.Context('second_context')
+
+	# # print(context1.__dict__)
+	mediator.evaluate_context(context1)
+
+	# # mediator.feature_model['tmp']
+	# print(mediator._contexts)
 
 
-# med = create()
-med = load()
-print(med)
-
-print(med.feature_model)
+main()
