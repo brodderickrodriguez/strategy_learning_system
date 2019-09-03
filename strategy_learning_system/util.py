@@ -7,6 +7,7 @@
 
 import ema_workbench
 import numpy as np
+import datetime
 
 
 def load_results(data_dir):
@@ -23,3 +24,9 @@ def load_results(data_dir):
 def clean_dir(dir):
 	d = dir.replace('//', '/')
 	return d
+
+def datetime_str():
+	dts = str(datetime.datetime.now())
+	for e in ['.', ':', '-', ' ']:
+		dts = dts.replace(e, '_')
+	return dts
