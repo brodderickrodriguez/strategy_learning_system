@@ -4,7 +4,6 @@
 
 import os
 import copy
-import json
 from . import util
 
 
@@ -12,11 +11,7 @@ class Context:
 	def __init__(self, name=None):
 		dts = util.datetime_str()
 
-		if name is not None:
-			self.name = name
-		else:
-			self.name = dts
-
+		self.name = name if name is not None else dts
 		self.created_on = dts
 		self.resolution_model = []
 		self.num_experiments = 0
@@ -25,34 +20,26 @@ class Context:
 		self.num_processes = 1
 		self.synthesized_data = None
 		self.learned_data = None
+		self.data_path = None
 
-	# TODO: load synthesized data
-	# TODO: load learned_data
-	@staticmethod
-	def load(context_path):
-		meta_data_path = context_path + '/meta_data.json'
+	def __str__(self):
+		return 'Context: {}'.format(self.name)
 
-		ctx = Context()
+	def __repr__(self):
+		return self.__str__()
 
-		with open(meta_data_path, 'r') as f:
-			ctx.__dict__ = json.load(f)
+	def __eq__(self, o):
+		return self.name == o.name
 
-		return ctx
+	def add_feature(self, f):
+		if f in self.resolution_model:
+			return
 
-	def save(self, path):
-		self.path = util.clean_dir('{}/{}'.format(path, self.name))
-		meta_data_path = self.path + '/meta_data.json'
-
-		if not os.path.exists(self.path):
-			os.mkdir(self.path)
-
-		with open(meta_data_path, 'w') as f:
-			context_dict = copy.deepcopy(self.__dict__)
-			f.write(json.dumps(context_dict))
+		self.resolution_model.append(f)
 
 	@property
 	def synthesized_data(self):
-		if not os.path.exits('{}/synthesized_data.zip'.format(self.path)):
+		if not os.path.exits('{}/synthesized_data.zip'.format(self.dir_path)):
 			raise ValueError('this context has not been evaluated yet.')
 
 		# TODO: open and parse data here
@@ -72,5 +59,3 @@ class Context:
 	def learned_data(self, v):
 		pass
 		# check here if file exists
-	
-	

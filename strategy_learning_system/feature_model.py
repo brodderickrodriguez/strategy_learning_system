@@ -3,8 +3,6 @@
 # 29 Aug. 2019
 
 import ema_workbench
-import copy
-import json
 
 IntegerParameter = ema_workbench.IntegerParameter
 TimeSeriesOutcome = ema_workbench.TimeSeriesOutcome
@@ -46,35 +44,9 @@ class FeatureModel:
 	def constraints(self, v):
 		self._outcomes = v
 
-	def get(self, attr):
-		pass
-
 	def __getitem__(self, key):
 		print('getting ', key)
 
 	def __iter__(self):
 		_all = (self.model_uncertainties + self.environmental_uncertainties + self.outcomes)
 		return _all.__iter__()
-
-	def to_dict(self):
-		d = copy.deepcopy(self.__dict__)
-		for key, val in d.items():
-			d[key] = [o.__dict__ for o in val]
-		return d
-
-	@staticmethod
-	def from_file(f):
-		with open(f, 'r') as f:
-			fdr = json.load(f)
-
-		fm = FeatureModel()
-
-		fm.outcomes = [TimeSeriesOutcome(o['name'])  for o in fdr['_outcomes']]
-
-		fm.environmental_uncertainties = [IntegerParameter(o['name'], o['lower_bound'], o['upper_bound']) 
-											for o in fdr['_environmental_uncertainties']]
-
-		fm.model_uncertainties = [IntegerParameter(o['name'], o['lower_bound'], o['upper_bound']) 
-											for o in fdr['_model_uncertainties']]
-
-		return fm

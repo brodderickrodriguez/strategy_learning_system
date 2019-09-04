@@ -3,20 +3,17 @@
 # 24 Aug. 2019
 
 import os
-import copy
-import json
+import pickle
 from . import model_synthesizer, util
 from .feature_model import FeatureModel
 from .context import Context
 
 
 class ModelMediator:
-	def __init__(self, name=None, from_file=False):
+	def __init__(self, name=None):
 		self.name = name
 		self._contexts = []
-
-		if not from_file:
-			self.created_on = util.datetime_str()
+		self.created_on = util.datetime_str()
 
 	def __str__(self):
 		try:
@@ -46,24 +43,22 @@ class ModelMediator:
 	@model.setter
 	def model(self, v):
 		# make sure that the user passed a tuple containing the model: (<dir>, <name>)
-		try:
-			model_dir, model_name = v
-		except TypeError:
-			raise ValueError('must pass a tuple: (<dir>, <name>)')
-			return
+		assert isinstance(v, tuple), '{} must be a tuple: (<dir>, <name>)'.format(v)
+
+		assert len(v) == 2, '{} must be a tuple: (<dir>, <name>)'.format(v) 
+
+		# extract model_dir and model_name
+		model_dir, model_name = v
 
 		# if the last char in model_dir is not backslash then append it
-		model_dir = util.clean_dir(model_dir + '/')
+		model_dir = util.clean_dir_path(model_dir + '/')
 
-		try:
-			# make sure that the model_dir is valid
-			assert os.path.exists(model_dir)
+		# make sure that the model_dir is valid
+		assert os.path.exists(model_dir), 'model dir \'{}\' does not exist'.format(model_dir)
 
-			# make sure that the model_file exists
-			assert os.path.isfile(model_dir + model_name)
-		except AssertionError:
-			raise AttributeError('Mediator.model: {} is not a valid file'.format(model_dir + model_name))
-
+		# make sure that the model_file exists
+		assert os.path.isfile(model_dir + model_name), 'model name \'{}\' does not exist'.format(model_name)
+		
 		# finally save the model info
 		self._model = {'dir': model_dir, 'name': model_name}
 
@@ -82,91 +77,47 @@ class ModelMediator:
 	@save_location.setter
 	def save_location(self, save_dir):
 		# make sure save_dir is valid
-		assert os.path.exists(save_dir)
+		assert os.path.exists(save_dir), '{} is not a valid directory'.format(save_dir)
 
 		# save the save_location
-		self._save_location = util.clean_dir(save_dir)
+		self._save_location = util.clean_dir_path(save_dir)
 
-		# save the current Mediator definition
-		self.save()
-
-	# TODO: incomplete
 	def save(self):
 		# make sure the user has specified the save_location before saving
-		try:
-			assert self._save_location
-		except AttributeError:
-			raise AttributeError('first specify the Mediator.save_location')
+		assert self._save_location, 'first specify the Mediator.save_location'
 		
-		root_dir_path = util.clean_dir('{}/{}'.format(self.save_location, self.name))	
-		contexts_path =  root_dir_path + '/contexts'
-		meta_data_path = root_dir_path + '/meta_data.json'
-		feature_model_path = root_dir_path + '/feature_model.json'
+		root_dir_path = util.clean_dir_path('{}/{}'.format(self.save_location, self.name))	
+		meta_data_path = root_dir_path + '/meta_data.pkl'
 
 		# create root data directory
 		if not os.path.exists(root_dir_path):
 			os.mkdir(root_dir_path)
 
-		# create contexts dir
-		if not os.path.exists(contexts_path):
-			os.mkdir(contexts_path)
+		# save the meta data
+		with open(meta_data_path, 'wb') as f:
+			pickle.dump(self, f)
 
-		# save the meta_data
-		with open(meta_data_path, 'w') as f:
-			meta_data_dict = copy.deepcopy(self.__dict__)
-
-			if '_feature_model' in meta_data_dict:
-				del meta_data_dict['_feature_model']
-
-			f.write(json.dumps(meta_data_dict))
-
-		# save feature model
-		if hasattr(self, '_feature_model'):
-			with open(feature_model_path, 'w') as f:
-				feature_model_dict = self.feature_model.to_dict()
-				f.write(json.dumps(feature_model_dict))
-
-		# save contexts
-		for ctx in self._contexts:
-			ctx.save(contexts_path)
-
-	# TODO: incomplete
 	@staticmethod
 	def load(root_dir_path):
 		# make sure root_dir_path is valid
-		assert os.path.exists(root_dir_path)
+		assert os.path.exists(root_dir_path), '{} does not exist'.format(root_dir_path)
 
 		# define the path to a Mediator's meta_data
-		meta_data_path = root_dir_path + '/meta_data.json'
-		feature_model_path = root_dir_path + '/feature_model.json'
-		contexts_path =  root_dir_path + '/contexts'
+		meta_data_path = root_dir_path + '/meta_data.pkl'
 
-		# create an Mediator object
-		med = ModelMediator(from_file=True)
-
-		# load and assign the meta_data 
-		with open(meta_data_path, 'r') as f:
-			med.__dict__ = json.load(f)
-
-		# load feature model
-		med.feature_model = FeatureModel.from_file(feature_model_path)
-
-		# load contexts
-		for cxt_name in os.listdir(contexts_path):
-			cxt_path = '{}/{}'.format(contexts_path, cxt_name)
-			cxt = Context.load(cxt_path)
-			med._contexts.append(cxt)
-
-		return med
+		# load meta data file
+		with open(meta_data_path, 'rb') as f:
+			return pickle.load(f)
 
 	def evaluate_context(self, cxt):
+		# make sure the user has specified a save location
+		assert self._save_location, 'first specify the Mediator.save_location'
+
 		# make sure cxt is of time Context
-		if not isinstance(cxt, Context):
-			raise ValueError('{} is not of type Context'.format(cxt))
+		assert isinstance(cxt, Context), '{} is not of type Context'.format(cxt)
 
 		# name sure the cxt name is unique
-		if True in [cxt.name == o.name for o in self._contexts]:
-			raise NameError('a context with then name {} already exists'.format(cxt.name))
+		assert cxt not in self._contexts, 'a context with name {} already exists'.format(cxt.name)
 
 		# make sure all model attributes in the resolution model are 
 		# present in the feature model as well
@@ -174,9 +125,8 @@ class ModelMediator:
 			if attr not in self.feature_model:
 				raise ValueError('{} is not present in the FeatureModel'.format(attr))
 
-		# save this context 
-		contexts_path = util.clean_dir('{}/{}/contexts/'.format(self.save_location, self.name))	
-		cxt.save(contexts_path)
+		# assign this context's data path
+		cxt.data_path = util.clean_dir_path('{}/{}/contexts/'.format(self.save_location, self.name))	
 
 		# add the context to this mediator
 		self._contexts.append(cxt)
@@ -184,7 +134,6 @@ class ModelMediator:
 		# call the synthesizer to collect model data
 		results = model_synthesizer.synthesize(self, cxt)
 
-		# TODO: this can maybe be moved to 
 		# save the synthesized data to the context object
 		cxt.synthesized_data = results
 	
