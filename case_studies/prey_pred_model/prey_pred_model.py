@@ -4,9 +4,10 @@
 
 import strategy_learning_system as sls
 
-
-NAME = 'preypred'
-ROOT = '/home/bcr/Dropbox/Projects/'
+ROOT = '/home/bcr/Dropbox/Projects'
+MODEL_DIR = ROOT + '/CODE/NetLogo/prey_predator_nlogo'
+MODEL_FILE_NAME = 'preypred.nlogo'
+MEDIATOR_NAME = 'preypred'
 SAVE_LOC = ROOT + '/data/sls_data'
 
 
@@ -37,28 +38,27 @@ def define_feature_model():
 
 
 def create():
-	model_dir = ROOT + '/CODE/NetLogo/prey_predator_nlogo'
-	med = sls.ModelMediator(name=NAME)
-	med.model = (model_dir, 'preypred.nlogo')
+	med = sls.ModelMediator(name=MEDIATOR_NAME)
+	med.model = (MODEL_DIR, MODEL_FILE_NAME)
 	med.feature_model = define_feature_model()
 	med.save_location = SAVE_LOC
+	med.save()
 	return med 	
 
 
 def main():
-	# mediator = create()
-	mediator = sls.ModelMediator.load(SAVE_LOC + '/' + NAME)
-	print(mediator)
-
+	mediator = create()
+	# mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
 	print(mediator._contexts)
 
-	context1 = sls.Context('second_context')
 
-	# # print(context1.__dict__)
-	mediator.evaluate_context(context1)
 
-	# # mediator.feature_model['tmp']
-	# print(mediator._contexts)
+
+	mediator.save()
+
+
+
+
 
 
 main()
