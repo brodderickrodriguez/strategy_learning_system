@@ -1,6 +1,5 @@
 TODO
 
-
 context:
 - how to load synthesized and learned data? should take into account memory usage
 - how does the context save its dir path?
@@ -9,15 +8,12 @@ Model synthesizer:
 - debug why ema isnt working 
 - come up with a better way to store the nlogo path
 
-
 Model Mediator:
-- figure out why py cannot find self.contexts
 - complete save
 - complete load
 - complete evaluate_context
 - complete learn
 - complete explain
-
 
 Feature Model:
 - come up with a final design 
