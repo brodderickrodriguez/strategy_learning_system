@@ -21,7 +21,7 @@ def load_results(data_dir):
     return exp_df, out_dict
 
 
-def clean_dir(dir):
+def clean_dir_path(dir):
 	d = dir.replace('//', '/')
 	return d
 
