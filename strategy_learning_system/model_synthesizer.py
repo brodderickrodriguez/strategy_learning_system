@@ -8,9 +8,6 @@ from ema_workbench.connectors.netlogo import NetLogoModel
 from ema_workbench import ema_logging, MultiprocessingEvaluator
 
 
-NETLOGO_HOME = '/home/bcr/apps/netlogo'
-
-
 def _build_executable_model(mediator, context):
 	# define lists for the model's uncertainties and outcomes
 	uncertainties, outcomes = [], []
@@ -32,10 +29,10 @@ def _build_executable_model(mediator, context):
 	model_file = mediator.model['name']
 
 	# set the dir path where NetLogo is located
-	netlogo_home = NETLOGO_HOME
+	netlogo_home = mediator.netlogo['dir']
 
 	# set the NetLogo version
-	netlogo_version = 6
+	netlogo_version = mediator.netlogo['version']
 
 	# turn GUI off
 	gui = False
@@ -69,7 +66,8 @@ def synthesize(mediator, context):
 
 	with MultiprocessingEvaluator(ema_model, 
 								n_processes=context.num_processes, 
-								maxtasksperchild=4) as evaluator:
+								maxtasksperchild=context.tasks_per_subchild) as evaluator:
+		
 		results = evaluator.perform_experiments(context.num_experiments)
 
 	return results

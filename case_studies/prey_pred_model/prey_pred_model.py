@@ -9,6 +9,7 @@ MODEL_DIR = ROOT + '/CODE/NetLogo/prey_predator_nlogo'
 MODEL_FILE_NAME = 'preypred.nlogo'
 MEDIATOR_NAME = 'preypred'
 SAVE_LOC = ROOT + '/data/sls_data'
+NETLOGO_HOME = '/home/bcr/apps/netlogo'
 
 
 def define_feature_model():
@@ -40,6 +41,7 @@ def define_feature_model():
 def create():
 	med = sls.ModelMediator(name=MEDIATOR_NAME)
 	med.model = (MODEL_DIR, MODEL_FILE_NAME)
+	med.netlogo = (NETLOGO_HOME, 6)
 	med.feature_model = define_feature_model()
 	med.save_location = SAVE_LOC
 	med.save()

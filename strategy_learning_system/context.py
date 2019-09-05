@@ -18,6 +18,7 @@ class Context:
 		self.num_replications = 0
 		self.max_run_length = 0
 		self.num_processes = 1
+		self.tasks_per_subchild = 4
 		self.synthesized_data = None
 		self.learned_data = None
 		self.data_path = None
