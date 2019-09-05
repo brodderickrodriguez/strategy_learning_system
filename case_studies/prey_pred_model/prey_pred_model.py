@@ -56,7 +56,7 @@ def create_context1(mediator):
 	cxt = sls.Context(name='context1')
 	cxt.resolution_model = cxt1_resolution
 	cxt.num_experiments = 10
-	cxt.num_repititions = 30
+	cxt.num_replications = 30
 	cxt.max_run_length = 100
 	cxt.num_processes = 3
 
@@ -70,10 +70,7 @@ def main():
 
 	cxt1 = create_context1(mediator)
 
-
 	mediator.evaluate_context(cxt1)
-
-	# print(t)
 
 
 

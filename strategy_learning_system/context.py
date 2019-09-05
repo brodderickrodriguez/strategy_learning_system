@@ -15,7 +15,7 @@ class Context:
 		self.created_on = dts
 		self.resolution_model = []
 		self.num_experiments = 0
-		self.num_repititions = 0
+		self.num_replications = 0
 		self.max_run_length = 0
 		self.num_processes = 1
 		self.synthesized_data = None
@@ -32,10 +32,8 @@ class Context:
 		return self.name == o.name
 
 	def add_feature(self, f):
-		if f in self.resolution_model:
-			return
-
-		self.resolution_model.append(f)
+		if f not in self.resolution_model:
+			self.resolution_model.append(f)
 
 	@property
 	def synthesized_data(self):
