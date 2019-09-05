@@ -116,8 +116,11 @@ class ModelMediator:
 		# make sure cxt is of time Context
 		assert isinstance(cxt, Context), '{} is not of type Context'.format(cxt)
 
-		# name sure the cxt name is unique
+		# make sure the cxt name is unique
 		assert cxt not in self._contexts, 'a context with name {} already exists'.format(cxt.name)
+
+		# make sure the user has specified something in the Context.resolution_model
+		assert len(cxt.resolution_model) > 0, '{} has resolution_model to evaluate'.format(cxt.name)
 
 		# make sure all model attributes in the resolution model are 
 		# present in the feature model as well
