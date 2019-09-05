@@ -38,7 +38,12 @@ def _build_executable_model(mediator, context):
 	gui = False
 
 	# create the NetLogoModel object
-	ema_model = NetLogoModel(name, model_dir_path, model_file, netlogo_home, netlogo_version, gui)
+	ema_model = NetLogoModel(name=name, 
+							wd=model_dir_path, 
+							model_file=model_file, 
+							netlogo_home=netlogo_home, 
+							netlogo_version=netlogo_version, 
+							gui=gui)
 	
 	# set the max run length of this model
 	ema_model.run_length = context.max_run_length
@@ -55,14 +60,10 @@ def _build_executable_model(mediator, context):
 
 def synthesize(mediator, context):
 	# turn logging on
-	ema_logging.log_to_stderr(ema_logging.INFO)
+	# ema_logging.log_to_stderr(ema_logging.INFO)
 
 	# create a EMA Model Object
 	ema_model = _build_executable_model(mediator, context)
-
-	print(ema_model.outcomes)
-
-	return None
 
 	with MultiprocessingEvaluator(ema_model, 
 								n_processes=context.num_processes, 
