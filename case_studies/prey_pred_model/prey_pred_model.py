@@ -62,6 +62,7 @@ def create_context1(mediator):
 
 	return cxt
 
+
 def main():
 	# mediator = create()
 	mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
@@ -69,7 +70,8 @@ def main():
 
 	cxt1 = create_context1(mediator)
 
-	print(cxt1.__dict__)
+
+	mediator.evaluate_context(cxt1)
 
 	# print(t)
 
