@@ -3,10 +3,6 @@ TODO
 context:
 - how to load synthesized and learned data? should take into account memory usage
 
-Model synthesizer:
-- debug why ema isnt working 
-- come up with a better way to store the nlogo path
-
 Model Mediator:
 - complete evaluate_context
 - complete learn
