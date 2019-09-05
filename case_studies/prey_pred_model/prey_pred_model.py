@@ -46,18 +46,32 @@ def create():
 	return med 	
 
 
+def create_context1(mediator):
+	cxt1_resolution = mediator.feature_model.outcomes
+	cxt1_resolution.append(mediator.feature_model['sheep-gain-from-food'])
+	cxt1_resolution.append(mediator.feature_model['wolf-gain-from-food'])
+	cxt1_resolution.append(mediator.feature_model['initial-number-sheep'])
+	cxt1_resolution.append(mediator.feature_model['initial-number-wolves'])
+
+	cxt = sls.Context(name='context1')
+	cxt.resolution_model = cxt1_resolution
+	cxt.num_experiments = 10
+	cxt.num_repititions = 30
+	cxt.max_run_length = 100
+	cxt.num_processes = 3
+
+	return cxt
+
 def main():
-	mediator = create()
-	# mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
-	print(mediator._contexts)
+	# mediator = create()
+	mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
+	# mediator.save()
 
+	cxt1 = create_context1(mediator)
 
+	print(cxt1.__dict__)
 
-
-	mediator.save()
-
-
-
+	# print(t)
 
 
 
