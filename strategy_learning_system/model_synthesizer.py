@@ -11,28 +11,41 @@ from ema_workbench import ema_logging, MultiprocessingEvaluator
 NETLOGO_HOME = '/home/bcr/apps/netlogo'
 
 
-def _build_executable_model(nediator, context):
-	pass
-	# ema_model = NetLogoModel(model_info['inter_name'], 
-	# 						wd=model_info['dir'], 
-	# 						model_file=model_info['name'], 
-	# 						netlogo_home=NETLOGO_HOME, 
-	# 						netlogo_version=6, 
-	# 						gui=False)
+def _build_executable_model(mediator, context):
+	name = mediator.name
+	model_dir_path = mediator.model['dir']
+	model_file = mediator.model['name']
+	netlogo_home = NETLOGO_HOME
+	netlogo_version = 6
+	gui = False
 
-	# ema_model.max_run_length = max_run_length
-	# ema_model.replications = num_repititions
+	uncertainties, outcomes = [], []
 
-	# uncertainties, outcomes = resolution_model
-	# ema_model.uncertainties = uncertainties
-	# ema_model.outcomes = outcomes
+	for attr in context.resolution_model:
+		if attr in mediator.feature_model.outcomes:
+			outcomes.append(attr)
+		else:
+			uncertainties.append(attr)
 
-	# return ema_model
+	ema_model = NetLogoModel(name, model_dir_path, model_file, netlogo_home, netlogo_version, gui)
+	ema_model.run_length = context.max_run_length
+	ema_model.replications = context.num_repititions
 
-#model_info, resolution_model, num_experiments, max_run_length, num_repititions, num_processes
+	ema_model.uncertainties = uncertainties
+	ema_model.outcomes = outcomes
+
+	return ema_model
+
+
 def synthesize(mediator, context):
 	# ema_logging.log_to_stderr(ema_logging.INFO)
 	ema_model = _build_executable_model(mediator, context)
+
+	print(ema_model.outcomes)
+
+
+	for o in ema_model.uncertainties:
+		print(o)
 
 	return None
 
