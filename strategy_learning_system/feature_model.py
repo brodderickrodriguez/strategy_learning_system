@@ -3,6 +3,7 @@
 # 29 Aug. 2019
 
 import ema_workbench
+import copy
 
 IntegerParameter = ema_workbench.IntegerParameter
 TimeSeriesOutcome = ema_workbench.TimeSeriesOutcome
@@ -10,11 +11,23 @@ TimeSeriesOutcome = ema_workbench.TimeSeriesOutcome
 
 class FeatureModel:
 	def __init__(self):
-		pass
+		self.environmental_uncertainties = []
+		self.model_uncertainties = []
+		self.outcomes = []
+
+	def __getitem__(self, key):
+		params = dict((e.name, e) for e in self.__iter__())
+
+		if key in params:
+			return params[key]
+
+	def __iter__(self):
+		_all = (self.model_uncertainties + self.environmental_uncertainties + self.outcomes)
+		return _all.__iter__()
 
 	@property
 	def environmental_uncertainties(self):
-		return self._environmental_uncertainties
+		return copy.deepcopy(self._environmental_uncertainties)
 
 	@environmental_uncertainties.setter
 	def environmental_uncertainties(self, v):
@@ -22,7 +35,7 @@ class FeatureModel:
 
 	@property
 	def model_uncertainties(self):
-		return self._model_uncertainties
+		return copy.deepcopy(self._model_uncertainties)
 
 	@model_uncertainties.setter
 	def model_uncertainties(self, v):
@@ -30,7 +43,7 @@ class FeatureModel:
 	
 	@property
 	def outcomes(self):
-		return self._outcomes
+		return copy.deepcopy(self._outcomes)
 	
 	@outcomes.setter
 	def outcomes(self, v):
@@ -43,10 +56,3 @@ class FeatureModel:
 	@constraints.setter
 	def constraints(self, v):
 		self._outcomes = v
-
-	def __getitem__(self, key):
-		print('getting ', key)
-
-	def __iter__(self):
-		_all = (self.model_uncertainties + self.environmental_uncertainties + self.outcomes)
-		return _all.__iter__()
