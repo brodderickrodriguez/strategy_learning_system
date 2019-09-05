@@ -74,9 +74,6 @@ class ModelMediator:
 		assert len(v) == 2, '{} must be a tuple: (<dir>, <version>)'.format(v) 
 
 		netlogo_dir, netlogo_version = v
-
-		# make sure netlogo_version is int
-		assert isinstance(netlogo_version, int), '{} must be an int (i.e. 6)'.format(netlogo_version)
 		
 		# make sure that the model_dir is valid
 		assert os.path.exists(netlogo_dir), 'NetLogo dir \'{}\' does not exist'.format(netlogo_dir)
@@ -160,7 +157,6 @@ class ModelMediator:
 
 		# save the synthesized data to the context object
 		cxt.synthesized_data = results
-	
 
 	# TODO: incomplete
 	def learn(self):
