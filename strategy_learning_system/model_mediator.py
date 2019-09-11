@@ -147,7 +147,7 @@ class ModelMediator:
 				raise ValueError('{} is not present in the FeatureModel'.format(attr))
 
 		# assign this context's data path
-		cxt.data_path = util.clean_dir_path('{}/{}/contexts/'.format(self.save_location, self.name))	
+		cxt.data_path = util.clean_dir_path('{}/{}/'.format(self.save_location, self.name))	
 
 		# add the context to this mediator
 		self._contexts.append(cxt)
@@ -155,11 +155,8 @@ class ModelMediator:
 		# call the synthesizer to collect model data
 		results = model_synthesizer.synthesize(self, cxt)
 
-		# reshape and normalize
-		results = util.process_ema_results(self, cxt, results)
-
 		# save the synthesized data to the context object
-		cxt.synthesized_data = results
+		cxt.raw_exploratory_results = results
 
 	# TODO: incomplete
 	def learn(self):
