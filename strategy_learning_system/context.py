@@ -20,6 +20,7 @@ class Context:
 		self.num_processes = 1
 		self.tasks_per_subchild = 4
 		self.synthesized_data = None
+		self.processed_synthesized_data = None
 		self.learned_data = None
 		self.data_path = None
 
@@ -31,6 +32,17 @@ class Context:
 
 	def __eq__(self, o):
 		return self.name == o.name
+
+	# TODO: possibly make resolution_model a dict
+	def __getitem__(self, key):
+		for feature in self.resolution_model:
+			if feature.name == key:
+				return feature
+		return None
+
+	# finalize the design of this
+	def reward_function(self, *args):
+		raise NotImplementedError
 
 	def add_feature(self, f):
 		if f not in self.resolution_model:
@@ -49,6 +61,15 @@ class Context:
 	def synthesized_data(self, v):
 		pass
 		# check here if file exists
+
+
+	@property
+	def processes_synthesized_data(self):
+		return self._processes_synthesized_data
+
+	@processes_synthesized_data.setter
+	def processed_synthesized_data(self, v):
+		pass
 
 	@property
 	def learned_data(self):
