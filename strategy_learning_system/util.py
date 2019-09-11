@@ -20,24 +20,22 @@ def datetime_str():
 	return dts
 
 
-def normalize_experiments(context, exp_df):
-    # a list containing the ordered uncertainties 
-    keys = []
+def normalize_experiments(context, exp_df, digitize=True):
 
-    # for each column/uncertainty 
-    for column_name in exp_df:
-        # grab the name of the param we are working on
-        param = context[column_name]
+	# for each column/uncertainty 
+	for column_name in exp_df:
+		# grab the name of the param we are working on
+		param = context[column_name]
 
-        # add the param name to the ordered keys list
-        keys.append(column_name)
+		# take the min-max norm for each column
+		# using the ranges defined in the experiments uncertainties
+		exp_df[column_name] = (exp_df[column_name] - param.lower_bound) / (param.upper_bound - param.lower_bound)
 
-        # take the min-max norm for each column
-        # using the ranges defined in the experiments uncertainties
-        exp_df[column_name] = (exp_df[column_name] - param.lower_bound) / (param.upper_bound - param.lower_bound)
-    
-    # return a tuple containing the ndarray experiments and experiments' keys
-    return exp_df.to_numpy(), keys
+		# if digitize is true, then bin each of the attributes in exp_df
+		if digitize:
+			exp_df[column_name] = np.digitize(exp_df[column_name], context.bins, right=True)
+
+	return exp_df
 
 
 def shape_outcomes(outcomes_dict):
@@ -56,8 +54,10 @@ def shape_outcomes(outcomes_dict):
     # shape here is (<# experiments>, <# outcomes>, <# repetition length>)
     outcomes = np.nanmean(outcomes, axis=2)
 
-    # return tuple containing outcomes and outcomes' keys
-    return outcomes, keys
+    # create a dictionary with all the outcomes: 
+    # <key>: (<# experiments>, <# outcomes>, <# repetition length>)
+
+    return keys, outcomes
 
 
 def process_ema_results(context, results):
@@ -68,11 +68,12 @@ def process_ema_results(context, results):
 	exp_df = exp_df.drop(['policy', 'model', 'scenario'], axis=1)
 
 	# get a normalized version of the experiments
-	# returns a tuple: (<experiments>, <uncertainties' names>)
+	# returns a data frame
 	experiments = normalize_experiments(context, exp_df)
 
 	# reshape the outcomes and take the mean over all repetitions
-	# returns a tuple: (<outcomes>, <outcomes' names>)
+	# returns a dictionary:
+	# <key>: (<# experiments>, <# outcomes>, <# repetition length>)
 	outcomes = shape_outcomes(out_dict)
 
 	# return a dict containing both experiments and outcomes
