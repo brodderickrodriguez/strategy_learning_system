@@ -72,4 +72,4 @@ def synthesize(mediator, context):
 		# run model using EMA
 		results = evaluator.perform_experiments(context.num_experiments)
 
-	return results
+		return results
