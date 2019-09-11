@@ -60,7 +60,7 @@ def _build_executable_model(mediator, context):
 
 def synthesize(mediator, context):
 	# turn logging on
-	# ema_logging.log_to_stderr(ema_logging.INFO)
+	ema_logging.log_to_stderr(ema_logging.INFO)
 
 	# create a EMA Model Object
 	ema_model = _build_executable_model(mediator, context)
@@ -69,6 +69,7 @@ def synthesize(mediator, context):
 								n_processes=context.num_processes, 
 								maxtasksperchild=context.tasks_per_subchild) as evaluator:
 		
+		# run model using EMA
 		results = evaluator.perform_experiments(context.num_experiments)
 
 	return results
