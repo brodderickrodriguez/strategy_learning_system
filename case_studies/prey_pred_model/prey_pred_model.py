@@ -49,12 +49,12 @@ def create():
 	return med 	
 
 
-def reward_function_1(outcomes, keys):
-	MAX_TICK_ALLOWED = 100
+def reward_function_1(outcome_keys, outcomes):
+	MAX_TICK_ALLOWED = 50
 	rewards = np.zeros((outcomes.shape[0]))
 
 	for i, experiment_outcomes in enumerate(outcomes):
-		d = {key: exp_out for key, exp_out in zip(keys, experiment_outcomes)}
+		d = {key: exp_out for key, exp_out in zip(outcome_keys, experiment_outcomes)}
 
 		max_tick = np.max(d['ticks'])
 		wolves_pop_std = np.std(d['wolves'])
@@ -62,8 +62,7 @@ def reward_function_1(outcomes, keys):
 		grass_pop_std = np.std(d['grass'])
 
 		rho = wolves_pop_std + sheep_pop_std + grass_pop_std + (MAX_TICK_ALLOWED - max_tick)
-
-		rewards[i] = (1.0 / rho) * 100
+		rewards[i] = (1.0 / rho) * 1000
 
 	return rewards
 
@@ -78,33 +77,27 @@ def create_context1(mediator):
 	cxt = sls.Context(name='context1')
 	cxt.reward_function = reward_function_1
 	cxt.resolution_model = cxt1_resolution
-	cxt.num_experiments = 10
-	cxt.num_replications = 30
-	cxt.max_run_length = 100
+	cxt.bins = np.linspace(0.0, 1.0, 3)
+
+	cxt.num_experiments = 5
+	cxt.num_replications = 10
+	cxt.max_run_length = 50
 	cxt.num_processes = 3
 
 	return cxt
 
+
 def main():
 	# mediator = create()
 	mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
-	# mediator.save()
 
-	cxt1 = create_context1(mediator)
+	print(mediator._contexts[0].processed_exploratory_results)
+	print(mediator._contexts[0].raw_exploratory_results)
+
+
+	# cxt1 = create_context1(mediator)
 	# mediator.evaluate_context(cxt1)
-
-	# print(mediator)
-	# print(cxt1)
-
-	from ema_workbench import load_results
-	path = '/home/bcr/Desktop/tmp.tar.gz'
-	results = load_results(path)
-
-
-	results = sls.util.process_ema_results(cxt1, results)
-
-	rews = cxt1.reward_function(*results['outcomes'])
-	print(rews)
+	# mediator.save()
 
 
 main()
