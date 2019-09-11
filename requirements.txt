@@ -3,7 +3,7 @@ wheel
 ipython
 ipyparallel
 ema_workbench
-pynetlogo
+pynetlogo==0.3.0
 numpy
 scipy
 pandas
