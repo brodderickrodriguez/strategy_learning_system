@@ -155,6 +155,9 @@ class ModelMediator:
 		# call the synthesizer to collect model data
 		results = model_synthesizer.synthesize(self, cxt)
 
+		# reshape and normalize
+		results = util.process_ema_results(self, cxt, results)
+
 		# save the synthesized data to the context object
 		cxt.synthesized_data = results
 
