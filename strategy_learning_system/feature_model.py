@@ -16,7 +16,7 @@ class FeatureModel:
 		self.outcomes = []
 
 	def __getitem__(self, key):
-		params = dict((e.name, e) for e in self.__iter__())
+		params = {e.name: e for e in self.__iter__()}
 
 		if key in params:
 			return params[key]
