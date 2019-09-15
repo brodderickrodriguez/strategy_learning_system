@@ -1,9 +1,9 @@
-JPype1==0.6.3
+JPype1==0.7.0
 wheel
 ipython
 ipyparallel
 ema_workbench
-pynetlogo==0.3.0
+pynetlogo==0.4.0
 numpy
 scipy
 pandas
