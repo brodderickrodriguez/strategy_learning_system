@@ -4,13 +4,21 @@
 
 import strategy_learning_system as sls
 import numpy as np
+import sys
 
-ROOT = '/home/bcr/Dropbox/Projects'
+# for bcr 
+if sys.platform == 'darwin':
+	ROOT = '/Users/bcr/Dropbox/Projects'
+	NETLOGO_HOME = '/Applications/NetLogo-6.0.4/'
+
+else:
+	ROOT = '/home/bcr/Dropbox/Projects'
+	NETLOGO_HOME = '/home/bcr/apps/NetLogo 6.0.4/'
+
 MODEL_DIR = ROOT + '/CODE/NetLogo/prey_predator_nlogo'
 MODEL_FILE_NAME = 'preypred.nlogo'
 MEDIATOR_NAME = 'preypred'
 SAVE_LOC = ROOT + '/data/sls_data'
-NETLOGO_HOME = '/home/bcr/apps/NetLogo 6.0.4/'
 
 
 def define_feature_model():
@@ -87,18 +95,26 @@ def create_context1(mediator):
 	return cxt
 
 
-def main():
-	# mediator = create()
-	mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
-
-	print(mediator._contexts[0].processed_exploratory_results)
-	print(mediator._contexts[0].raw_exploratory_results)
 
 
-	# cxt1 = create_context1(mediator)
-	# mediator.evaluate_context(cxt1)
-	# mediator.save()
+
+# mediator = create()
+mediator = sls.ModelMediator.load(root_dir_path=(SAVE_LOC + '/' + MEDIATOR_NAME))
+# mediator.save()
+
+# cxt1 = create_context1(mediator)
+cxt1 = mediator['context1']
+# print(cxt1)
+
+# mediator.evaluate_context(cxt1)
+# print(cxt1.processed_exploratory_results)
+
+mediator.learn(cxt1)
+print(cxt1.processed_learned_data)
 
 
-main()
+
+
+
+
 
