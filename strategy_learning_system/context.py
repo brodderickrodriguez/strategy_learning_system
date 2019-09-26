@@ -45,7 +45,7 @@ class Context:
 			if feature.name == key:
 				return feature
 		return None
-
+		
 	@staticmethod
 	def reward_function(outcome_keys, outcomes):
 		raise NotImplementedError
@@ -121,7 +121,7 @@ class Context:
 			pickle.dump(v, f)
 
 		# call the process function to process the learned data
-		self.process_exploratory_results(v)
+		self.process_learned_results(v)
 
 	# TODO: incomplete; convert classifier predicates back to normal ranges
 	def process_learned_results(self, results):
