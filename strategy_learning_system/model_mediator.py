@@ -4,7 +4,7 @@
 
 import os
 import pickle
-from . import model_synthesizer, util
+from . import model_synthesizer, learn, util
 from .feature_model import FeatureModel
 from .context import Context
 
@@ -25,6 +25,15 @@ class ModelMediator:
 
 	def __repr__(self):
 		return self.__str__()
+
+	def __getitem__(self, key):
+		for context in self._contexts:
+			if context.name == key:
+				return context
+		return None
+
+	def __setitem__(self, key):
+		raise Warning('this operation is not supported')
 
 	@property
 	def name(self):
@@ -159,9 +168,15 @@ class ModelMediator:
 		cxt.raw_exploratory_results = results
 
 	# TODO: incomplete
-	def learn(self):
-		pass
-		# RUN XCS HERE
+	def learn(self, cxt):
+
+		assert isinstance(cxt, Context), '{} is not of type Context'
+
+		assert cxt.processed_exploratory_results is not None, 'this context has not been explored'
+
+		results = learn.learn(self, cxt)
+
+		cxt.raw_learned_results = results
 
 	# TODO: incomplete
 	def explain(self):
