@@ -3,7 +3,9 @@
 # 24 Aug. 2019
 
 import xcsr
+from . import util
 import numpy as np
+import shutil
 
 
 class GenericConfiguration(xcsr.Configuration):
@@ -14,7 +16,7 @@ class GenericConfiguration(xcsr.Configuration):
 		self.episodes_per_replication = 1
 
 		# length of an episode
-		self.steps_per_episode = 10 
+		self.steps_per_episode = 10 ** 2
 
 		self.is_multi_step = False
 
@@ -27,22 +29,40 @@ class GenericConfiguration(xcsr.Configuration):
 
 
 class GenericEnvironment(xcsr.Environment):
-	def __init__(self, config):
-		xcsr.Environment.__init__(self, config, data)
+	def __init__(self, config, *args):
+		print(config)
+		xcsr.Environment.__init__(self, config)
+
+		print(len(args))
+		print(len(args[0]))
 
 		self._current_state_idx = 0
-		self.states, self.actions, self.rhos = data
-		self.state_shape = self.states.shape
-		self.action_shape = self.actions.shape
+		self.states, self.actions, self.rhos = args[0]
+		self.state_shape = (self.states.shape[1],)
+		self.action_shape = (self.actions.shape[1],)
+
+		self.possible_actions = self._get_possible_actions()
+
+		print(self.rhos)
+		# exit()
 
 		self._set_state()
+
+	def _get_possible_actions(self):
+		actions = []
+		for action in self.actions.drop_duplicates().to_numpy():
+			actions.append(tuple(action))
+		return actions
 
 	def get_state(self):
 		return self._state
 
 	def _set_state(self):
 		self._current_state_idx = np.random.choice(len(self.states))
-		self._state = np.array(self.states.loc[self._current_state_idx])
+		print(self.states)
+		self._state = np.array(self.states.iloc[0])
+
+		print('state is ', self._state)
 
 	def step(self, action):
 		self.end_of_program = True
@@ -56,9 +76,13 @@ class GenericEnvironment(xcsr.Environment):
 
 		expected_action = np.array(self.actions.loc[self._current_state_idx])
 
-		rmse = np.sqrt(np.sum((actual_action - expected_action) ** 2) / len(actual_action))
+		rmse = np.sum((actual_action - expected_action) ** 2)
 
-		percentage = 1.0 if rmse == 0 else 1.0 / rmse
+		percentage = 1.0 if rmse == 0.0 else 1.0 / rmse
+
+		print('exp: {} act: {} perc: {}'.format(expected_action, actual_action, percentage))
+
+		return int(not False in expected_action == actual_action)
 
 		return percentage * self.rhos[self._current_state_idx]
 
@@ -67,24 +91,6 @@ class GenericEnvironment(xcsr.Environment):
 
 	def print_world(self):
 		print('state:\t\t{}\nexp_action:\t{}\n'.format(self._state, np.array(self.actions.loc[self._current_state_idx])))
-
-	def human_play(self):
-		while not self.termination_criteria_met():
-			self.print_world()
-
-			try:
-				action = input('input action: ')
-			except ValueError:
-				print('invalid action')
-				continue
-
-			action = self.actions.loc[self._current_state_idx]
-
-			rho = self.step(action)
-
-			print('reward:\t', rho)
-			print('eop?:\t', self.end_of_program)
-			print()
 
 
 def _parse_data(feature_model, resolution_model, data):
@@ -100,33 +106,38 @@ def _parse_data(feature_model, resolution_model, data):
 
 	return states, actions, rhos
 
-def _run_xcsr(env, config, data):
+
+def _run_xcsr(env, config, data, save_loc):
 	driver = xcsr.XCSRDriver()
 	driver.config_class = config
 	driver.env_class = env
 	driver.env_args = data
-	driver.replications = 5
-	driver.save_location = '/Users/bcr/Desktop'
-	driver.experiment_name = 'TMP2'
-	driver.run()
+	driver.replications = 1
+	driver.save_location = save_loc
+	driver.experiment_name = 'learned_data'
+	classifiers = driver.run()
 
 	dir_name = '{}/{}'.format(driver.save_location, driver.experiment_name)
-	xcsr.util.plot_results(dir_name, title='G', interval=50)
-	shutil.rmtree(dir_name)
+	xcsr.util.plot_results(dir_name, title='G', interval=10)
+	# shutil.rmtree(dir_name)
+	return classifiers
+
 
 
 def learn(mediator, cxt):
+	save_loc = '{}/{}'.format(mediator.save_location, mediator.name)
+	print('mediator save location:', mediator.save_location)
+	print(save_loc)
+
 	data = _parse_data(mediator.feature_model, cxt.resolution_model, cxt.processed_exploratory_results)
+	print(data, 'hi')
+	return data
 
-	config = GenericConfiguration
-
-	env = GenericEnvironment
-
-	print(cxt.processed_exploratory_results)
-
-	_run_xcsr(env, config, data)
-
-	env(config()).human_play()
+	# this looks like something for human play
+	# config = GenericConfiguration
+	# env = GenericEnvironment
+	# _run_xcsr(env, config, data, save_loc)
+	# env(config(), data).human_play()
 
 
 if __name__ == '__main__':
