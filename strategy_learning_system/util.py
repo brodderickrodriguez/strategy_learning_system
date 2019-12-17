@@ -6,7 +6,7 @@ import ema_workbench
 import numpy as np
 import pandas as pd
 import datetime
-
+from .feature_model import CategoricalParameter
 
 def clean_dir_path(dir):
 	d = dir.replace('//', '/')
@@ -21,19 +21,23 @@ def datetime_str():
 
 
 def normalize_experiments(context, exp_df, digitize=True):
-
-	# for each column/uncertainty 
+	# for each column/uncertainty
 	for column_name in exp_df:
 		# grab the name of the param we are working on
 		param = context[column_name]
 
-		# take the min-max norm for each column
-		# using the ranges defined in the experiments uncertainties
-		exp_df[column_name] = (exp_df[column_name] - param.lower_bound) / (param.upper_bound - param.lower_bound)
+		if isinstance(param, CategoricalParameter):
+			col = list(exp_df[column_name])
+			col = [param.category_to_index[c] for c in col]
+			exp_df[column_name] = col
+		else:
+			# take the min-max norm for each column
+			# using the ranges defined in the experiments uncertainties
+			exp_df[column_name] = (exp_df[column_name] - param.lower_bound) / (param.upper_bound - param.lower_bound)
 
-		# if digitize is true, then bin each of the attributes in exp_df
-		if digitize:
-			exp_df[column_name] = np.digitize(exp_df[column_name], context.bins, right=True)
+			# if digitize is true, then bin each of the attributes in exp_df
+			if digitize:
+				exp_df[column_name] = np.digitize(exp_df[column_name], context.bins, right=True)
 
 	return exp_df
 
