@@ -1,9 +1,1 @@
-TODO
 
-context:
-- how to load synthesized and learned data? should take into account memory usage
-
-Model Mediator:
-- complete evaluate_context
-- complete learn
-- complete explain
