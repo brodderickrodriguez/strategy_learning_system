@@ -149,10 +149,11 @@ class ModelMediator:
 		# make sure the user has specified something in the Context.resolution_model
 		assert len(cxt.resolution_model) > 0, '{} has resolution_model to evaluate'.format(cxt.name)
 
-		# make sure all model attributes in the resolution model are 
+		# make sure all model attributes in the resolution model are
 		# present in the feature model as well
+		# print('feature_model', self.feature_model)
 		for attr in cxt.resolution_model:
-			if attr not in self.feature_model:
+			if attr not in list(self.feature_model):
 				raise ValueError('{} is not present in the FeatureModel'.format(attr))
 
 		# assign this context's data path
@@ -177,6 +178,8 @@ class ModelMediator:
 		results = learn.learn(self, cxt)
 
 		cxt.raw_learned_results = results
+
+		return results
 
 	# TODO: incomplete
 	def explain(self):
