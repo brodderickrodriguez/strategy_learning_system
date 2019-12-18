@@ -5,7 +5,7 @@
 import os
 import pickle
 from . import model_synthesizer, learn, util
-from .feature_model import FeatureModel
+from .feature_model import CategoricalParameter
 from .context import Context
 
 
@@ -148,13 +148,6 @@ class ModelMediator:
 
 		# make sure the user has specified something in the Context.resolution_model
 		assert len(cxt.resolution_model) > 0, '{} has resolution_model to evaluate'.format(cxt.name)
-
-		# make sure all model attributes in the resolution model are
-		# present in the feature model as well
-		# print('feature_model', self.feature_model)
-		for attr in cxt.resolution_model:
-			if attr not in list(self.feature_model):
-				raise ValueError('{} is not present in the FeatureModel'.format(attr))
 
 		# assign this context's data path
 		cxt.data_path = util.clean_dir_path('{}/{}/'.format(self.save_location, self.name))	
