@@ -5,7 +5,6 @@
 import ema_workbench
 import copy
 import enum
-import pickle
 
 
 class FeatureType(enum.Enum):
@@ -149,18 +148,8 @@ class FeatureModel:
 		return self._root.collapse().__iter__()
 
 	def __getitem__(self, item):
-		return self._get_subtree(item)
-
-	def __contains__(self, item):
-		for p in list(self.__iter__()):
-			if p == item.name:
-				return True
-
-		return False
-
-	def _get_subtree(self, name):
 		def _subtree_rec(current):
-			if current.name == name:
+			if current.name == item:
 				return current
 			else:
 				for sub_feature_edge in current.sub_features:
@@ -172,23 +161,18 @@ class FeatureModel:
 		features = _subtree_rec(self._root)
 		return features
 
+	def __contains__(self, item):
+		for p in list(self.__iter__()):
+			if p == item.name:
+				return True
+
+		return False
+
 	def collapse(self, subtree=None):
 		if subtree is None:
 			subtree = self._root
 
 		return subtree.collapse()
-
-	@property
-	def uncertainties(self, subtree_root_edge=None):
-		c = self.collapse(subtree_root_edge)
-		result = [ci for ci in c if ci.feature_type != FeatureType.outcome]
-		return result
-
-	@property
-	def outcomes(self, subtree_root_edge=None):
-		c = self.collapse(subtree_root_edge)
-		result = [ci for ci in c if ci.feature_type == FeatureType.outcome]
-		return result
 
 	def add_sub_feature(self, feature, feature_type, constraint, netlogo_categorical_name=None):
 		self._root.add_sub_feature(feature, feature_type, constraint, netlogo_categorical_name)
