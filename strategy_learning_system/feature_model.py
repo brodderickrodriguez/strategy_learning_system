@@ -176,3 +176,27 @@ class FeatureModel:
 
 	def add_sub_feature(self, feature, feature_type, constraint, netlogo_categorical_name=None):
 		self._root.add_sub_feature(feature, feature_type, constraint, netlogo_categorical_name)
+
+	def _get_uncertainties(self, feature_type):
+		def _subtree_rec(current):
+			env_uncertainties = []
+			if current.feature_type == feature_type:
+				c = copy.deepcopy(current)
+				c.sub_features = tuple()
+				env_uncertainties.append(c)
+
+			for sub_feature in current.sub_features:
+				env_uncertainties += _subtree_rec(sub_feature)
+
+			return env_uncertainties
+
+		result = _subtree_rec(self._root)
+		return result
+
+	def model_uncertainties(self):
+		result = self._get_uncertainties(feature_type=FeatureType.model)
+		return result
+
+	def environmental_uncertainties(self):
+		result = self._get_uncertainties(feature_type=FeatureType.environmental)
+		return result

@@ -7,6 +7,7 @@ from . import util
 import numpy as np
 import pandas as pd
 import pickle
+from .feature_model import FeatureType
 
 
 class Context:
@@ -19,6 +20,7 @@ class Context:
 		self.name = name if name is not None else dts
 		self.created_on = dts
 		self.resolution_model = []
+		self.all_parameters = []
 		self.data_path = None
 		self.bins = np.linspace(0.0, 1.0, 3)
 
@@ -41,11 +43,25 @@ class Context:
 		return self.name == o.name
 
 	def __getitem__(self, key):
-		for feature in self.resolution_model:
-			if feature.name == key:
-				return feature
-		return None
-		
+		def _look(l):
+			for f in l:
+				if f.name == key:
+					return f
+			return None
+
+		features = self.collapsed_resolution_model()
+		frm = _look(features)
+
+		if frm is not None:
+			return frm
+
+		apl = _look(self.all_parameters)
+		return apl
+
+	def collapsed_resolution_model(self):
+		features = [feat for subtree in self.resolution_model for feat in subtree.collapse()]
+		return features
+
 	@staticmethod
 	def reward_function(outcome_keys, outcomes):
 		raise NotImplementedError
@@ -101,8 +117,8 @@ class Context:
 	@property
 	def raw_learned_results(self):
 		# define a path to the raw learned results for this context
-		path = Context.RAW_LEAR_RES_PATH.format(self.data_path, self.name)
-		
+		path = Context.RAW_LEAR_RES_PATH.format(self.data_path[:-1], self.name)
+
 		# assert that the path exists
 		# i.e. the learning process has be done
 		assert os.path.exists(path), 'the learned data cannot be found for {}'.format(self.name)
@@ -127,3 +143,13 @@ class Context:
 	def process_learned_results(self, results):
 		pass
 		self.processed_learned_data = np.inf
+
+	def environmental_uncertainties(self):
+		frm = [f for substree in self.resolution_model for f in substree.collapse()]
+		frm = [f for f in frm if f.feature_type == FeatureType.environmental]
+		return frm
+
+	def model_uncertainties(self):
+		frm = [f for substree in self.resolution_model for f in substree.collapse()]
+		frm = [f for f in frm if f.feature_type == FeatureType.model]
+		return frm

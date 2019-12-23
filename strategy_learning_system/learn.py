@@ -16,25 +16,41 @@ class GenericConfiguration(xcsr.Configuration):
 		self.episodes_per_replication = 1
 
 		# length of an episode
-		self.steps_per_episode = 10 ** 2
+		self.steps_per_episode = 10 ** 3
 
 		self.is_multi_step = False
 
-		self.predicate_1 = 0.29
-
-		self.predicate_delta = 0.1
+		self.predicate_1 = 0.0
 
 		# the maximum size of the population (in micro-classifiers)
-		self.N = 750
+		self.N = 10
+
+		# the GA threshold. GA is applied in a set when the average time
+		# since the last GA in the set is greater than theta_ga
+		self.theta_ga = np.random.uniform(25, 50)
+
+		# the probability of applying crossover in the GA
+		self.chi = 0.8
+
+		# specifies the probability of mutating an allele in the offspring
+		self.mu = np.random.uniform(0.01, 0.05)
+
+		# subsumption threshold. experience of a classifier must be greater
+		# than theta_sub in order to be able to subsume another classifier
+		self.theta_sub = 5
+
+		# probability of using '#' (Classifier.WILDCARD_ATTRIBUTE_VALUE)
+		# in one attribute in the condition of a classifier when covering
+		self.p_sharp = 0.1
+
+		# probability during action selection of choosing the
+		# action uniform randomly
+		self.p_explr = 0.5
 
 
 class GenericEnvironment(xcsr.Environment):
 	def __init__(self, config, *args):
-		print(config)
 		xcsr.Environment.__init__(self, config)
-
-		print(len(args))
-		print(len(args[0]))
 
 		self._current_state_idx = 0
 		self.states, self.actions, self.rhos = args[0]
@@ -43,10 +59,15 @@ class GenericEnvironment(xcsr.Environment):
 
 		self.possible_actions = self._get_possible_actions()
 
-		print(self.rhos)
-		# exit()
+		self.max_value = self._find_max_value(self.states, self.actions)
 
 		self._set_state()
+
+	@staticmethod
+	def _find_max_value(states, actions):
+		s = np.amax(np.array(states))
+		a = np.amax(np.array(actions))
+		return np.max([s, a])
 
 	def _get_possible_actions(self):
 		actions = []
@@ -59,12 +80,10 @@ class GenericEnvironment(xcsr.Environment):
 
 	def _set_state(self):
 		self._current_state_idx = np.random.choice(len(self.states))
-		print(self.states)
-		self._state = np.array(self.states.iloc[0])
-
-		print('state is ', self._state)
+		self._state = np.array(self.states.iloc[self._current_state_idx])
 
 	def step(self, action):
+
 		self.end_of_program = True
 		self.time_step += 1
 		rho = self._determine_rho(action)
@@ -76,15 +95,15 @@ class GenericEnvironment(xcsr.Environment):
 
 		expected_action = np.array(self.actions.loc[self._current_state_idx])
 
-		rmse = np.sum((actual_action - expected_action) ** 2)
+		max_distance = ((self.max_value ** 2) * actual_action.shape[0]) ** (1 / 2)
 
-		percentage = 1.0 if rmse == 0.0 else 1.0 / rmse
+		dist = np.linalg.norm(expected_action - actual_action)
 
-		print('exp: {} act: {} perc: {}'.format(expected_action, actual_action, percentage))
+		rho = 1 - (dist / max_distance)
 
-		return int(not False in expected_action == actual_action)
+		# print('state: {} action {} rho {}'.format(self._state, action, rho))
 
-		return percentage * self.rhos[self._current_state_idx]
+		return rho
 
 	def termination_criteria_met(self):
 		return self.time_step >= self._max_steps
@@ -94,15 +113,25 @@ class GenericEnvironment(xcsr.Environment):
 
 
 def _parse_data(feature_model, resolution_model, data):
-	feature_env_uncertainties = [eu.name for eu in feature_model.environmental_uncertainties]
-	feature_mod_uncertainties = [mu.name for mu in feature_model.model_uncertainties]
-	resolution_model_names = [rmu.name for rmu in resolution_model]
-	env_uncertainties = list(set(feature_env_uncertainties) & set(resolution_model_names))
-	mod_uncertainties = list(set(feature_mod_uncertainties) & set(resolution_model_names))
+	all_environmental_uncertainties = feature_model.environmental_uncertainties()
+	all_model_uncertainties = feature_model.model_uncertainties()
+
+	environmental_names = [eu.name for eu in all_environmental_uncertainties]
+	model_names = [mu.name for mu in all_model_uncertainties]
+	resolution_names = [rmu.name for rmu in resolution_model]
+
+	env_uncertainties = list(set(environmental_names) & set(resolution_names))
+	mod_uncertainties = list(set(model_names) & set(resolution_names))
 
 	states = data[env_uncertainties]
 	actions = data[mod_uncertainties]
 	rhos = data['rho']
+
+	states_np = np.array(states)
+	state_min = np.min(states_np)
+	state_max = np.max(states_np)
+
+	states = (states - state_min) / (state_max - state_min)
 
 	return states, actions, rhos
 
@@ -118,28 +147,24 @@ def _run_xcsr(env, config, data, save_loc):
 	classifiers = driver.run()
 
 	dir_name = '{}/{}'.format(driver.save_location, driver.experiment_name)
-	xcsr.util.plot_results(dir_name, title='G', interval=10)
-	# shutil.rmtree(dir_name)
-	return classifiers
-
+	fig = xcsr.util.plot_results(dir_name, title='', interval=50, generate_only=True)
+	shutil.rmtree(dir_name)
+	return classifiers, fig
 
 
 def learn(mediator, cxt):
 	save_loc = '{}/{}'.format(mediator.save_location, mediator.name)
-	print('mediator save location:', mediator.save_location)
-	print(save_loc)
+	feature_model = mediator.feature_model
+	resolution_model = cxt.collapsed_resolution_model()
+	exploratory_data = cxt.processed_exploratory_results
 
-	data = _parse_data(mediator.feature_model, cxt.resolution_model, cxt.processed_exploratory_results)
-	print(data, 'hi')
-	return data
+	data = _parse_data(feature_model=feature_model,
+					   resolution_model=resolution_model,
+					   data=exploratory_data)
 
-	# this looks like something for human play
-	# config = GenericConfiguration
-	# env = GenericEnvironment
-	# _run_xcsr(env, config, data, save_loc)
-	# env(config(), data).human_play()
+	config = GenericConfiguration
+	env = GenericEnvironment
+	classifiers, fig = _run_xcsr(env, config, data, save_loc)
+	fig.savefig('{}/learn_plot.png'.format(save_loc))
 
-
-if __name__ == '__main__':
-	e = xcsr.Configuration()
-
+	return classifiers

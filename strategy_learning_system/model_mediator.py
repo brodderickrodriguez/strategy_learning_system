@@ -4,7 +4,7 @@
 
 import os
 import pickle
-from . import model_synthesizer, learn, util
+from . import model_synthesizer, learn, util, explain
 from .feature_model import CategoricalParameter
 from .context import Context
 
@@ -175,6 +175,6 @@ class ModelMediator:
 		return results
 
 	# TODO: incomplete
-	def explain(self):
-		pass
-		# MAKE HEATMAPS HERE
+	def explain(self, cxt):
+		explain.plot_learned(self, cxt)
+		explain.plot_explored(self, cxt)

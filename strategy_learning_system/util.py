@@ -26,6 +26,9 @@ def normalize_experiments(context, exp_df, digitize=True):
 		# grab the name of the param we are working on
 		param = context[column_name]
 
+		if param is None:
+			continue
+
 		if isinstance(param, CategoricalParameter):
 			col = list(exp_df[column_name])
 			col = [param.category_to_index[c] for c in col]
