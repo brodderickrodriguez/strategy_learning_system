@@ -152,10 +152,11 @@ def create_context1(mediator):
 	cxt1_resolution = []
 	cxt1_resolution.append(mediator.feature_model['coverage-percentage'])
 	cxt1_resolution.append(mediator.feature_model['population'])
+	cxt1_resolution.append(mediator.feature_model['coverage-data-decay'])
 
 	# cxt1_resolution.append(mediator.feature_model['global-search-policy'])
-	cxt1_resolution.append(mediator.feature_model['\"flock-search\"'])
-	cxt1_resolution.append(mediator.feature_model['UAV-vision'])
+	# cxt1_resolution.append(mediator.feature_model['\"flock-search\"'])
+	# cxt1_resolution.append(mediator.feature_model['UAV-vision'])
 	cxt1_resolution.append(mediator.feature_model['wind-speed'])
 	cxt1_resolution.append(mediator.feature_model['number-plumes'])
 
@@ -165,18 +166,18 @@ def create_context1(mediator):
 	# print(list(mediator.feature_model))
 	# print(cxt1_resolution)
 
-	cxt.bins = np.linspace(0.0, 1.0, 3)
-	cxt.num_experiments = 5
+	cxt.bins = np.linspace(0.0, 1.0, 5)
+	cxt.num_experiments = 625
 	cxt.num_replications = 10
-	cxt.max_run_length = 5000
-	cxt.num_processes = 3
+	cxt.max_run_length = 1000
+	cxt.num_processes = 11
 	return cxt
 
 
 def create_flock_context(mediator):
 	resolution = []
 	resolution.append(mediator.feature_model['coverage-percentage'])
-	resolution.append(mediator.feature_model['\"flock-search\"'])
+	# resolution.append(mediator.feature_model['\"flock-search\"'])
 
 	resolution.append(mediator.feature_model['UAV-vision'])
 	resolution.append(mediator.feature_model['UAV-decontamination-strength'])
@@ -185,35 +186,69 @@ def create_flock_context(mediator):
 	cxt = sls.Context(name='flock_context')
 	cxt.reward_function = reward_function_1
 	cxt.resolution_model = resolution
-	cxt.bins = np.linspace(0.0, 1.0, 3)
-	cxt.num_experiments = 50
+	cxt.bins = np.linspace(0.0, 1.0, 5)
+	cxt.num_experiments = 5
 	cxt.num_replications = 10
 	cxt.max_run_length = 5000
 	cxt.num_processes = 8
 	return cxt
 
 
+
+# med = create()
+med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+print(med)
+print(med.feature_model)
+
+
+
+# cxt1 = create_context1(med)
+cxt1 = med['context1']
+# print(cxt1.resolution_model)
+# med.evaluate_context(cxt1)
+med.save()
+
+# r = med.learn(cxt1)
+# print('res',r)
+
+med.save()
+
+
+med.explain(cxt1)
+
+
+
 # med = create()
 # print(med.feature_model)
-
 # cxt1 = create_context1(med)
 # print(cxt1.resolution_model)
 # med.evaluate_context(cxt1)
 # med.save()
-# print(cxt1.resolution_model)w
 # print(cxt1.processed_exploratory_results.to_string())
 
-#
-med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-print(med.feature_model)
-flock_context = create_flock_context(med)
 
-print(flock_context.resolution_model)
+# med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+# print(med.feature_model)
+# flock_context = create_flock_context(med)
+# print(flock_context.resolution_model)
+# med.evaluate_context(flock_context)
+# print(flock_context.processed_exploratory_results.to_string())
+# med.save()
 
-med.evaluate_context(flock_context)
-med.save()
 
-print(flock_context.processed_exploratory_results.to_string())
+
+
+
+# flock_context = med['context1']
+
+# print(flock_context.resolution_model)
+# print(flock_context.processed_exploratory_results.to_string())
+# r = med.learn(flock_context)
+# print('res',r)
+
+
+# print(flock_context.raw_learned_results)
+
 
 # cxt1 = med['context1']
 # print(cxt1.processed_exploratory_results)
