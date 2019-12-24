@@ -1,4 +1,5 @@
 git+https://github.com/brodderickrodriguez/xcsr.git
+git+https://github.com/brodderickrodriguez/ema_lite.git
 JPype1==0.7.0
 wheel
 ipython
@@ -10,3 +11,4 @@ scipy
 pandas
 scikit-learn
 matplotlib
+seaborn
