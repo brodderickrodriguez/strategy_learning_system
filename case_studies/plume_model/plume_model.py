@@ -204,17 +204,17 @@ print(med.feature_model)
 
 # cxt1 = create_context1(med)
 cxt1 = med['context1']
-# print(cxt1.resolution_model)
+print(cxt1.resolution_model)
 # med.evaluate_context(cxt1)
 med.save()
 
-# r = med.learn(cxt1)
+r = med.learn(cxt1)
 # print('res',r)
 
 med.save()
 
 
-med.explain(cxt1)
+# med.explain(cxt1)
 
 
 
