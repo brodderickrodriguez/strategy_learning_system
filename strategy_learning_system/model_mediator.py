@@ -176,5 +176,5 @@ class ModelMediator:
 
 	# TODO: incomplete
 	def explain(self, cxt):
-		explain.plot_learned(self, cxt)
-		explain.plot_explored(self, cxt)
+		explain.plot_learned(cxt)
+		explain.plot_explored(cxt)

@@ -16,14 +16,14 @@ class GenericConfiguration(xcsr.Configuration):
 		self.episodes_per_replication = 1
 
 		# length of an episode
-		self.steps_per_episode = 10 ** 3
+		self.steps_per_episode = 10 ** 2
 
 		self.is_multi_step = False
 
 		self.predicate_1 = 0.0
 
 		# the maximum size of the population (in micro-classifiers)
-		self.N = 10
+		self.N = 5
 
 		# the GA threshold. GA is applied in a set when the average time
 		# since the last GA in the set is greater than theta_ga
@@ -83,7 +83,6 @@ class GenericEnvironment(xcsr.Environment):
 		self._state = np.array(self.states.iloc[self._current_state_idx])
 
 	def step(self, action):
-
 		self.end_of_program = True
 		self.time_step += 1
 		rho = self._determine_rho(action)
@@ -101,8 +100,6 @@ class GenericEnvironment(xcsr.Environment):
 
 		rho = 1 - (dist / max_distance)
 
-		# print('state: {} action {} rho {}'.format(self._state, action, rho))
-
 		return rho
 
 	def termination_criteria_met(self):
@@ -113,11 +110,8 @@ class GenericEnvironment(xcsr.Environment):
 
 
 def _parse_data(feature_model, resolution_model, data):
-	all_environmental_uncertainties = feature_model.environmental_uncertainties()
-	all_model_uncertainties = feature_model.model_uncertainties()
-
-	environmental_names = [eu.name for eu in all_environmental_uncertainties]
-	model_names = [mu.name for mu in all_model_uncertainties]
+	environmental_names = [eu.name for eu in feature_model.environmental_uncertainties()]
+	model_names = [mu.name for mu in feature_model.model_uncertainties()]
 	resolution_names = [rmu.name for rmu in resolution_model]
 
 	env_uncertainties = list(set(environmental_names) & set(resolution_names))

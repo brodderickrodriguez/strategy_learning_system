@@ -15,6 +15,8 @@ def plot_explored(context):
 	# axis0: y - environmental
 	# axis1: x - model
 
+	y_delim, x_delim = ' ', '\n'
+
 	environmental = [f.name for f in context.environmental_uncertainties()]
 	model = [f.name for f in context.model_uncertainties()]
 
@@ -23,23 +25,21 @@ def plot_explored(context):
 	x_values = list(itertools.product(range(context.bins.shape[0]), repeat=len(model)))
 	y_values = list(itertools.product(range(context.bins.shape[0]), repeat=len(environmental)))
 
-	x_values = [''.join(str(xi) for xi in x) for x in x_values]
-	y_values = [''.join(str(yi) for yi in y) for y in y_values]
-
-	x_values[0] = 'a'
+	x_values = ['\n'.join(str(xi) for xi in x) for x in x_values]
+	y_values = [y_delim.join(str(yi) for yi in y) for y in y_values]
 
 	x_dict = {x: [] for x in x_values}
 	structured_data = {y: x_dict for y in y_values[::-1]}
 
-	def row_to_string(row, uncertainties):
+	def row_to_string(row, uncertainties, s):
 		n = [int(i) for i in row[uncertainties]]
-		n_idx = ''.join(str(i) for i in n)
+		n_idx = s.join(str(i) for i in n)
 		return n_idx
 
 	for i in range(data.shape[0]):
 		row = data.iloc[i]
-		env_idx = row_to_string(row, environmental)
-		mod_idx = row_to_string(row, model)
+		env_idx = row_to_string(row, environmental, y_delim)
+		mod_idx = row_to_string(row, model, x_delim)
 		structured_data[env_idx][mod_idx].append(row['rho'])
 
 	for y_key in structured_data:
@@ -49,10 +49,21 @@ def plot_explored(context):
 
 	data = pd.DataFrame.from_dict(structured_data, orient='index')
 	f, ax = plt.subplots(figsize=(12, 10))
-	sns.heatmap(data, annot=False, fmt="f", linewidths=.5, ax=ax)
+
+	sns.heatmap(data, annot=False, fmt="f", linewidths=.5, ax=ax, center=0)
+
+	ax.text(-1, 0, environmental[0], rotation=45, fontsize=10)
+	ax.text(-0.5, 0, environmental[1], rotation=45, fontsize=10)
+	ax.text(25, 26.5, model[0], rotation=-25, fontsize=10)
+	ax.text(25, 28, model[1], rotation=-25, fontsize=10)
+
+	plt.xlabel('Model Uncertainties')
+	plt.ylabel('Environmental Uncertainties')
+
+	plt.yticks(rotation=00)
 	plt.show()
 
 
-def plot_learned(medicator, context):
+def plot_learned(context):
 	pass
 	# print('hi')e
