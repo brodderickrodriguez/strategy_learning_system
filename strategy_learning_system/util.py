@@ -8,6 +8,7 @@ import pandas as pd
 import datetime
 from .feature_model import CategoricalParameter
 
+
 def clean_dir_path(dir):
 	d = dir.replace('//', '/')
 	return d
@@ -36,11 +37,32 @@ def normalize_experiments(context, exp_df, digitize=True):
 		else:
 			# take the min-max norm for each column
 			# using the ranges defined in the experiments uncertainties
-			exp_df[column_name] = (exp_df[column_name] - param.lower_bound) / (param.upper_bound - param.lower_bound)
+			col = exp_df[column_name]
+			col = (col - param.lower_bound) / (param.upper_bound - param.lower_bound)
 
 			# if digitize is true, then bin each of the attributes in exp_df
 			if digitize:
-				exp_df[column_name] = np.digitize(exp_df[column_name], context.bins, right=True)
+				# if isinstance(context.bins, int):
+				# 	bin_interval = 1.0 / context.bins
+				# 	exp_df[column_name] = (exp_df[column_name] / bin_interval).astype(int)
+				# else:
+				# 	exp_df[column_name] = np.digitize(exp_df[column_name], context.bins, right=True)
+
+				if isinstance(context.bins, int):
+					n_bins = context.bins
+				else:
+					n_bins = len(context.bins)
+
+				interval = 1 / n_bins
+
+				# this "bins" elements in the array similar to np.digitize
+				# except here we are setting the last bin as inclusive, inclusive
+				for i in range(n_bins):
+					lb = i * interval
+					ub = (i + 1) * interval
+					col[(lb <= col) & (col < ub)] = i
+
+				exp_df[column_name] = col
 
 	return exp_df
 
@@ -61,7 +83,7 @@ def shape_outcomes(outcomes_dict):
     # shape here is (<# experiments>, <# outcomes>, <# repetition length>)
     outcomes = np.nanmean(outcomes, axis=2)
 
-    # create a dictionary with all the outcomes: 
+    # create a dictionary with all the outcomes:
     # <key>: (<# experiments>, <# outcomes>, <# repetition length>)
 
     return keys, outcomes

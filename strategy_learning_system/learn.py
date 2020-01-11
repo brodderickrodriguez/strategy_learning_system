@@ -16,21 +16,20 @@ class GenericConfiguration(xcsr.Configuration):
 		self.episodes_per_replication = 1
 
 		# length of an episode
-		self.steps_per_episode = 10 ** 2
-
+		self.steps_per_episode = 10 ** 6
 		self.is_multi_step = False
 
 		self.predicate_1 = 0.0
 
 		# the maximum size of the population (in micro-classifiers)
-		self.N = 5
+		self.N = 100
 
 		# the GA threshold. GA is applied in a set when the average time
 		# since the last GA in the set is greater than theta_ga
 		self.theta_ga = np.random.uniform(25, 50)
 
 		# the probability of applying crossover in the GA
-		self.chi = 0.8
+		self.chi = 0.28
 
 		# specifies the probability of mutating an allele in the offspring
 		self.mu = np.random.uniform(0.01, 0.05)
@@ -45,7 +44,7 @@ class GenericConfiguration(xcsr.Configuration):
 
 		# probability during action selection of choosing the
 		# action uniform randomly
-		self.p_explr = 0.5
+		self.p_explr = 0.3
 
 
 class GenericEnvironment(xcsr.Environment):
@@ -135,7 +134,7 @@ def _run_xcsr(env, config, data, save_loc):
 	driver.config_class = config
 	driver.env_class = env
 	driver.env_args = data
-	driver.replications = 1
+	driver.replications = 3
 	driver.save_location = save_loc
 	driver.experiment_name = 'learned_data'
 	classifiers = driver.run()

@@ -148,20 +148,38 @@ def reward_function_1(outcome_keys, outcomes):
 	return rewards
 
 
+def reward_function_2(outcome_keys, outcomes):
+	rewards = np.zeros((outcomes.shape[0]))
+	episode_dim = outcomes.shape[2]
+	t_vec = np.linspace(0.0, 1.0, episode_dim)
+	critical_points_interval = int(episode_dim / 5)
+
+	for i, experiment_outcomes in enumerate(outcomes):
+		d = {key: exp_out for key, exp_out in zip(outcome_keys, experiment_outcomes)}
+		xi = d['coverage-percentage']
+
+		f1 = np.mean(xi - t_vec)
+		f2 = np.mean(xi[::critical_points_interval])
+		zi = (2/3) * f1 + (1/3) * f2
+		rewards[i] = zi
+
+	r_min = np.min(rewards)
+	r_max = np.max(rewards)
+	rewards = (rewards - r_min) / (r_max - r_min)
+	return rewards
+
+
 def create_context1(mediator):
 	cxt1_resolution = []
 	cxt1_resolution.append(mediator.feature_model['coverage-percentage'])
 	cxt1_resolution.append(mediator.feature_model['population'])
 	cxt1_resolution.append(mediator.feature_model['coverage-data-decay'])
 
-	# cxt1_resolution.append(mediator.feature_model['global-search-policy'])
-	# cxt1_resolution.append(mediator.feature_model['\"flock-search\"'])
-	# cxt1_resolution.append(mediator.feature_model['UAV-vision'])
 	cxt1_resolution.append(mediator.feature_model['wind-speed'])
 	cxt1_resolution.append(mediator.feature_model['number-plumes'])
 
 	cxt = sls.Context(name='context1')
-	cxt.reward_function = reward_function_1
+	cxt.reward_function = reward_function_2
 	cxt.resolution_model = cxt1_resolution
 	# print(list(mediator.feature_model))
 	# print(cxt1_resolution)
@@ -174,47 +192,181 @@ def create_context1(mediator):
 	return cxt
 
 
-def create_flock_context(mediator):
-	resolution = []
-	resolution.append(mediator.feature_model['coverage-percentage'])
-	# resolution.append(mediator.feature_model['\"flock-search\"'])
+def run_context1():
+	# med = create()
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	# print(med)
+	# print(med.feature_model)
 
-	resolution.append(mediator.feature_model['UAV-vision'])
-	resolution.append(mediator.feature_model['UAV-decontamination-strength'])
-	resolution.append(mediator.feature_model['wind'])
+	# cxt1 = create_context1(med)
+	cxt1 = med['context1']
 
-	cxt = sls.Context(name='flock_context')
-	cxt.reward_function = reward_function_1
-	cxt.resolution_model = resolution
-	cxt.bins = np.linspace(0.0, 1.0, 5)
-	cxt.num_experiments = 5
+	cxt1.reward_function = reward_function_2
+	cxt1.bins = np.linspace(0.0, 1.0, 5)
+	# print(cxt1.resolution_model)
+	# med.evaluate_context(cxt1)
+	# med.save()
+
+	# raw = cxt1.raw_exploratory_results
+	# cxt1.process_exploratory_results(raw)
+
+
+	# med.learn(cxt1)
+
+	med.explain(cxt1)
+
+	med.save()
+
+
+# run_context1()
+
+
+
+def create_context2(mediator):
+	cxt1_resolution = []
+	cxt1_resolution.append(mediator.feature_model['coverage-percentage'])
+	cxt1_resolution.append(mediator.feature_model['population'])
+	cxt1_resolution.append(mediator.feature_model['coverage-data-decay'])
+
+	cxt1_resolution.append(mediator.feature_model['wind-speed'])
+	cxt1_resolution.append(mediator.feature_model['number-plumes'])
+
+	cxt = sls.Context(name='context2')
+	cxt.reward_function = reward_function_2
+	cxt.resolution_model = cxt1_resolution
+
+	cxt.bins = np.linspace(0.0, 1.0, 3)
+	cxt.num_experiments = 62
 	cxt.num_replications = 10
-	cxt.max_run_length = 5000
-	cxt.num_processes = 8
+	cxt.max_run_length = 1000
+	cxt.num_processes = 11
 	return cxt
 
 
+def run_context2():
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	# cxt = create_context2(med)
+	cxt = med['context2']
+	# med.evaluate_context(cxt)
 
-# med = create()
-med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-print(med)
-print(med.feature_model)
+	rv = cxt.raw_learned_results
 
+	cxt.process_learned_results(rv)
 
+	med.learn(cxt)
+	med.explain(cxt)
+	med.save()
 
-# cxt1 = create_context1(med)
-cxt1 = med['context1']
-print(cxt1.resolution_model)
-# med.evaluate_context(cxt1)
-med.save()
-
-r = med.learn(cxt1)
-# print('res',r)
-
-med.save()
+	# print(cxt.processed_learned_data)
 
 
-# med.explain(cxt1)
+run_context2()
+
+
+def create_flock_context(mediator):
+	resolution = []
+	resolution.append(mediator.feature_model['coverage-percentage'])
+	resolution.append(mediator.feature_model['\"flock-search\"'])
+	resolution.append(mediator.feature_model['UAV-vision'])
+	resolution.append(mediator.feature_model['UAV-decontamination-strength'])
+	resolution.append(mediator.feature_model['wind'])
+	cxt = sls.Context(name='flock_context')
+	cxt.reward_function = reward_function_2
+	cxt.resolution_model = resolution
+	cxt.bins = np.linspace(0.0, 1.0, 2)
+	cxt.num_experiments = 500
+	cxt.num_replications = 10
+	cxt.max_run_length = 1000
+	cxt.num_processes = 11
+	return cxt
+
+
+def run_flock_context():
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	cxt = med['flock_context']
+	# cxt = create_flock_context(med)
+	# med.evaluate_context(cxt)
+
+	cxt.bins = np.linspace(0.0, 1.0, 3)
+	raw = cxt.raw_exploratory_results
+	cxt.process_exploratory_results(raw)
+	print(cxt.processed_exploratory_results.to_string())
+	# med.learn(cxt)
+	med.explain(cxt)
+
+	med.save()
+
+
+# run_flock_context()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import matplotlib.pyplot as plt
+#
+# print(cxt1.raw_exploratory_results[1]['coverage-percentage'])
+#
+# d = cxt1.raw_exploratory_results[1]['coverage-percentage']
+# d = np.mean(d, axis=1)
+# x = range(d.shape[1])
+#
+# oline = np.linspace(0.0, 1.0, d.shape[1])
+#
+# for i, exp in enumerate(d):
+# 	plt.plot(x, exp, color=(0.0, 0.0, 1.0, 0.25))
+# 	# exit()
+#
+# plt.plot(x, oline, color=(1.0, 0, 0))
+# plt.show()
+# exit()
+
+
+
+
+
+
+
 
 
 

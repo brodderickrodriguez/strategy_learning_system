@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pickle
 from .feature_model import FeatureType, IntegerParameter, RealParameter, CategoricalParameter
+from .rule_set import RuleSet
 
 
 class Rule:
@@ -15,6 +16,7 @@ class Rule:
 		self.model_uncertainties = []
 		self.environmental_uncertainties = []
 		self.outcome = 0
+		self.confidence = 0
 		self.classifier = classifier
 
 	def __str__(self):
@@ -22,22 +24,25 @@ class Rule:
 		f_i = '\n\t{a} <= {fname} <= {b}'
 		s_m, s_e = '', ''
 
-		for f, r in self.model_uncertainties:
+		for f, r, _ in self.model_uncertainties:
 			s_m += f_i.format(a=r[0], b=r[1], fname=f.name)
 
-		for f, r in self.environmental_uncertainties:
+		for f, r, _ in self.environmental_uncertainties:
 			s_e += f_i.format(a=r[0], b=r[1], fname=f.name)
 
 		return s.format(s_m, s_e, self.outcome)
 
-
 	def __repr__(self):
 		return str(self)
+
+	def __lt__(self, other):
+		return self.classifier.predicted_payoff < other.classifier.predicted_payoff
 
 	@staticmethod
 	def from_xcsr_classifier(classifier, env_uncertainty, mod_uncertainty, bins):
 		rule = Rule(classifier)
 		rule.outcome = classifier.predicted_payoff
+		rule.confidence = 1 - classifier.epsilon
 
 		def _get_true_value(f_range, uncertainty):
 			r = lambda p: p * (uncertainty.upper_bound - uncertainty.lower_bound) + uncertainty.lower_bound
@@ -49,18 +54,19 @@ class Rule:
 			return a, b
 
 		def _get_bin_range(a):
+			a = int(a)
 			l = a - 1 if a > 0 else 0
 			r = a if a != 0 else 1
 			return bins[l], bins[r]
 
 		for pred, eu in zip(classifier.predicate, env_uncertainty):
 			p_true = _get_true_value(pred, eu)
-			rule.environmental_uncertainties.append((eu, p_true))
+			rule.environmental_uncertainties.append((eu, p_true, pred))
 
 		for act, mu in zip(classifier.action, mod_uncertainty):
 			act_range = _get_bin_range(act)
 			act_true = _get_true_value(act_range, mu)
-			rule.model_uncertainties.append((mu, act_true))
+			rule.model_uncertainties.append((mu, act_true, act_range))
 
 		return rule
 
@@ -165,6 +171,8 @@ class Context:
 
 		# insert the reward to the last column in the new data frame
 		data.insert(len(data.columns), 'rho', outcomes)
+
+		# rules = RuleSet.from_experiment_data(data)
 
 		# set the processed results to a variable
 		self.processed_exploratory_results = data
