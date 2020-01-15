@@ -12,39 +12,54 @@ class GenericConfiguration(xcsr.Configuration):
 	def __init__(self):
 		xcsr.Configuration.__init__(self)
 
-		# the maximum number of steps in each problem (replication)
-		self.episodes_per_replication = 1
+		self.alpha = 0.1
+		self.epsilon_0 = 0.01
+		self.v = 5
+
+		self.gamma = np.random.uniform(0.9, 0.99)
+
+		self.theta_mna = 1
+
+		self.do_ga_subsumption = True
 
 		# length of an episode
-		self.steps_per_episode = 10 ** 6
+		self.steps_per_episode = 10 ** 4 * 1
+		self.episodes_per_replication = 1
 		self.is_multi_step = False
 
+		self.beta = 0.9
+
 		self.predicate_1 = 0.0
+		self.p_1 = 0.1
+		self.epsilon_1 = np.random.uniform(0, 10 ** -4)
+		self.F_1 = 0.0
 
 		# the maximum size of the population (in micro-classifiers)
-		self.N = 100
+		self.N = 25
 
 		# the GA threshold. GA is applied in a set when the average time
 		# since the last GA in the set is greater than theta_ga
-		self.theta_ga = np.random.uniform(25, 50)
+		self.theta_ga = 50
 
 		# the probability of applying crossover in the GA
-		self.chi = 0.28
+		self.chi = 0.33
 
 		# specifies the probability of mutating an allele in the offspring
 		self.mu = np.random.uniform(0.01, 0.05)
 
 		# subsumption threshold. experience of a classifier must be greater
 		# than theta_sub in order to be able to subsume another classifier
-		self.theta_sub = 5
+		self.theta_sub = 20
 
 		# probability of using '#' (Classifier.WILDCARD_ATTRIBUTE_VALUE)
 		# in one attribute in the condition of a classifier when covering
-		self.p_sharp = 0.1
+		self.p_sharp = 0.5
 
 		# probability during action selection of choosing the
 		# action uniform randomly
-		self.p_explr = 0.3
+		self.p_explr = 1.0
+
+		self.theta_mna = 8
 
 
 class GenericEnvironment(xcsr.Environment):
@@ -97,7 +112,7 @@ class GenericEnvironment(xcsr.Environment):
 
 		dist = np.linalg.norm(expected_action - actual_action)
 
-		rho = 1 - (dist / max_distance)
+		rho = 1 - (dist / max_distance) * self.rhos[self._current_state_idx]
 
 		return rho
 
@@ -134,7 +149,7 @@ def _run_xcsr(env, config, data, save_loc):
 	driver.config_class = config
 	driver.env_class = env
 	driver.env_args = data
-	driver.replications = 3
+	driver.replications = 2
 	driver.save_location = save_loc
 	driver.experiment_name = 'learned_data'
 	classifiers = driver.run()

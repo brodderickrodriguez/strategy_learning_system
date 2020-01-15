@@ -181,8 +181,6 @@ def create_context1(mediator):
 	cxt = sls.Context(name='context1')
 	cxt.reward_function = reward_function_2
 	cxt.resolution_model = cxt1_resolution
-	# print(list(mediator.feature_model))
-	# print(cxt1_resolution)
 
 	cxt.bins = np.linspace(0.0, 1.0, 5)
 	cxt.num_experiments = 625
@@ -249,15 +247,10 @@ def run_context2():
 	cxt = med['context2']
 	# med.evaluate_context(cxt)
 
-	rv = cxt.raw_learned_results
-
-	cxt.process_learned_results(rv)
-
-	med.learn(cxt)
+	# med.learn(cxt)
 	med.explain(cxt)
-	med.save()
-
-	# print(cxt.processed_learned_data)
+	# med.save()
+	print(cxt.processed_learned_data)
 
 
 run_context2()
@@ -298,177 +291,3 @@ def run_flock_context():
 
 
 # run_flock_context()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import matplotlib.pyplot as plt
-#
-# print(cxt1.raw_exploratory_results[1]['coverage-percentage'])
-#
-# d = cxt1.raw_exploratory_results[1]['coverage-percentage']
-# d = np.mean(d, axis=1)
-# x = range(d.shape[1])
-#
-# oline = np.linspace(0.0, 1.0, d.shape[1])
-#
-# for i, exp in enumerate(d):
-# 	plt.plot(x, exp, color=(0.0, 0.0, 1.0, 0.25))
-# 	# exit()
-#
-# plt.plot(x, oline, color=(1.0, 0, 0))
-# plt.show()
-# exit()
-
-
-
-
-
-
-
-
-
-
-# med = create()
-# print(med.feature_model)
-# cxt1 = create_context1(med)
-# print(cxt1.resolution_model)
-# med.evaluate_context(cxt1)
-# med.save()
-# print(cxt1.processed_exploratory_results.to_string())
-
-
-# med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-# print(med.feature_model)
-# flock_context = create_flock_context(med)
-# print(flock_context.resolution_model)
-# med.evaluate_context(flock_context)
-# print(flock_context.processed_exploratory_results.to_string())
-# med.save()
-
-
-
-
-
-# flock_context = med['context1']
-
-# print(flock_context.resolution_model)
-# print(flock_context.processed_exploratory_results.to_string())
-# r = med.learn(flock_context)
-# print('res',r)
-
-
-# print(flock_context.raw_learned_results)
-
-
-# cxt1 = med['context1']
-# print(cxt1.processed_exploratory_results)
-
-# print(med.feature_model['global-search-policy']._categories)
-
-# states, actions, rhos = med.learn(cxt1)
-# print(cxt1.resolution_model)
-
-# print('rhos')
-# print(rhos)
-
-# with open('/Users/bcr/Dropbox/projects/data/sls_data/plume/learned_data/classifiers/replication0', 'rb') as f:
-# 	classifiers = pickle.load(f)
-# 	print(classifiers)
-	#
-	#
-	# all = ''
-	# header = 'predicate,action,pred,error,fit'
-	#
-	# all += header + '\n'
-	#
-	# for cl in classifiers:
-	# 	s = '{},{},{},{},{}'.format(cl.predicate, cl.action, cl.predicted_payoff, cl.epsilon, cl.fitness)
-	# 	all += s + '\n'
-	#
-	# print(all)
-
-# def print_classifier(cl1):
-# 	val = lambda p, x: abs((p.upper_bound * x) - p.lower_bound)
-#
-# 	print('classifier: ', cl1._id)
-# 	print('\texpected reward: {}'.format(cl1.predicted_payoff))
-# 	print('\terror: {}'.format(cl1.epsilon))
-# 	print('\tenvironmental uncertainties:')
-# 	# print(states.columns)
-# 	for i in range(len(states.columns)):
-# 		# print(i, states.columns[i])
-# 		# print(cxt1[states.columns[i]])
-#
-# 		pram = cxt1[states.columns[i]]
-# 		clp = cl1.predicate[i]
-# 		lbr = clp[0] if clp[0] < 1 else clp[0] - 1
-# 		lb = val(pram, lbr)
-# 		ub = val(pram, clp[1])
-#
-# 		print('\t\t{}: {} - {}'.format(pram.name, lb, ub))
-#
-# 	print('\n\tmodel uncertainties:')
-# 	for i in range(len(actions.columns)):
-# 		pram = cxt1[actions.columns[i]]
-# 		clp = cl1.action[i]
-# 		action_val = val(pram, clp)
-# 		# lbr = clp[0] if clp[0] < 1 else clp[1] - clp[0]
-# 		# lb = val(pram, lbr)
-# 		# ub = val(pram, clp[1])
-# 		print('\t\t{}: {}'.format(pram.name, action_val))
-#
-#
-# cl1 = classifiers[0]
-#
-# for cl1 in classifiers:
-# 	print()
-# 	print_classifier(cl1)
-
-
-
-
-
-
-

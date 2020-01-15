@@ -12,7 +12,6 @@ import copy
 
 
 def plot_explored(context):
-	return
 	sns.set()
 	# axis0: y - environmental
 	# axis1: x - model
@@ -53,23 +52,6 @@ def plot_explored(context):
 		for j in structured_data[i]:
 			structured_data[i][j] = np.nanmean(structured_data[i][j])
 
-
-	# def row_to_string(row, uncertainties, s):
-	# 	n = [int(i) for i in row[uncertainties]]
-	# 	n_idx = s.join(str(i) for i in n)
-	# 	return n_idx
-	#
-	# for i in range(data.shape[0]):
-	# 	row = data.iloc[i]
-	# 	env_idx = row_to_string(row, environmental, y_delim)
-	# 	mod_idx = row_to_string(row, model, x_delim)
-	# 	structured_data[env_idx][mod_idx].append(row['rho'])
-	#
-	# for y_key in structured_data:
-	# 	y_i = structured_data[y_key]
-	# 	for x_key in y_i:
-	# 		y_i[x_key] = np.mean(y_i[x_key])
-
 	data = pd.DataFrame.from_dict(structured_data, orient='index')
 
 	f, ax = plt.subplots(figsize=(12, 10))
@@ -89,7 +71,6 @@ def plot_explored(context):
 
 
 def plot_learned(context):
-
 	sns.set()
 	# axis0: y - environmental
 	# axis1: x - model
@@ -121,7 +102,7 @@ def plot_learned(context):
 		b = [d.join(str(xi) for xi in x) for x in bins]
 		return b
 
-	for rule in rules[::-1]:
+	for rule in rules:
 		eu_bins, mu_bins = [], []
 
 		for eu, _, (lb, ub) in rule.environmental_uncertainties:
@@ -140,45 +121,19 @@ def plot_learned(context):
 
 		for i_index in i_indexes:
 			for j_index in j_indexes:
-				structured_data[i_index][j_index].append((rule.outcome, rule.confidence))
-				# structured_data[i_index][j_index] = rule.outcome
-
-
-		print(rule)
-
-		if rule.confidence < 0.9:
-			break
-
-
+				structured_data[i_index][j_index].append((rule.outcome, rule.confidence, rule.experience))
 
 	for i in structured_data:
 		for j in structured_data[i]:
-			try:
-				outcomes, confidences = zip(*structured_data[i][j])
-				print(outcomes)
-				print(confidences)
-				structured_data[i][j] = np.average(outcomes, weights=confidences)
-			except ValueError:
+			if len(structured_data[i][j]) > 0:
+				outcomes, confidences, experiences = zip(*structured_data[i][j])
+				weights = [c * e for c, e in zip(confidences, experiences)]
+				structured_data[i][j] = np.average(outcomes, weights=weights)
+			else:
 				structured_data[i][j] = np.nan
 
-
-	# for key_i, val in structured_data.items():
-	# 	for key_j in val:
-	# 		try:
-	# 			outcomes, confidences = zip(*structured_data[key_i][key_j])
-	# 			v = np.average(outcomes, weights=confidences)
-	# 			structured_data[key_i][key_j] = v
-	# 		except:
-	# 			structured_data[key_i][key_j] = np.nan
-
-
-
-			# structured_data[key_i][key_j] = np.nanmean(structured_data[key_i][key_j])
-
 	data = pd.DataFrame.from_dict(structured_data, orient='index')
-
 	f, ax = plt.subplots(figsize=(12, 10))
-
 	sns.heatmap(data, annot=False, fmt="f", linewidths=.5, ax=ax, center=0)
 
 	plt.xlabel('Model Uncertainties')

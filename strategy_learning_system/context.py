@@ -7,8 +7,7 @@ from . import util
 import numpy as np
 import pandas as pd
 import pickle
-from .feature_model import FeatureType, IntegerParameter, RealParameter, CategoricalParameter
-from .rule_set import RuleSet
+from .feature_model import FeatureType, IntegerParameter
 
 
 class Rule:
@@ -17,10 +16,11 @@ class Rule:
 		self.environmental_uncertainties = []
 		self.outcome = 0
 		self.confidence = 0
+		self.experience = 0
 		self.classifier = classifier
 
 	def __str__(self):
-		s = '\nIF:\t  {}\nWHEN: {}\nTHEN: {}\n'
+		s = '\nIF:\t  {0}\nWHEN: {1}\nTHEN: {2:0.3f}\n(conf.: {3:0.3f}, exp.: {4})\n'
 		f_i = '\n\t{a} <= {fname} <= {b}'
 		s_m, s_e = '', ''
 
@@ -30,19 +30,29 @@ class Rule:
 		for f, r, _ in self.environmental_uncertainties:
 			s_e += f_i.format(a=r[0], b=r[1], fname=f.name)
 
-		return s.format(s_m, s_e, self.outcome)
+		return s.format(s_m, s_e, self.outcome, self.confidence, self.experience)
 
 	def __repr__(self):
 		return str(self)
 
 	def __lt__(self, other):
-		return self.classifier.predicted_payoff < other.classifier.predicted_payoff
+		sv = self.outcome * self.confidence
+		ov = other.outcome * other.confidence
+		return sv < ov
+
+	def __eq__(self, other):
+		return self.model_uncertainties == other.model_uncertainties and \
+			   self.environmental_uncertainties == other.environmental_uncertainties
+
+	# def __hash__(self):
+	# 	return self.model_uncertainties, self.environmental_uncertainties
 
 	@staticmethod
 	def from_xcsr_classifier(classifier, env_uncertainty, mod_uncertainty, bins):
 		rule = Rule(classifier)
 		rule.outcome = classifier.predicted_payoff
 		rule.confidence = 1 - classifier.epsilon
+		rule.experience = classifier.experience
 
 		def _get_true_value(f_range, uncertainty):
 			r = lambda p: p * (uncertainty.upper_bound - uncertainty.lower_bound) + uncertainty.lower_bound
@@ -172,8 +182,6 @@ class Context:
 		# insert the reward to the last column in the new data frame
 		data.insert(len(data.columns), 'rho', outcomes)
 
-		# rules = RuleSet.from_experiment_data(data)
-
 		# set the processed results to a variable
 		self.processed_exploratory_results = data
 
@@ -202,7 +210,6 @@ class Context:
 		# call the process function to process the learned data
 		self.process_learned_results(v)
 
-	# TODO: incomplete; convert classifier predicates back to normal ranges
 	def process_learned_results(self, results):
 		env_uncertainty = self.environmental_uncertainties()
 		mod_uncertainty = self.model_uncertainties()
@@ -210,10 +217,13 @@ class Context:
 		rules = []
 
 		for cl in classifiers:
-			r = Rule.from_xcsr_classifier(cl, env_uncertainty, mod_uncertainty, self.bins)
-			rules.append(r)
+			if cl.experience == 0:
+				continue
+			else:
+				r = Rule.from_xcsr_classifier(cl, env_uncertainty, mod_uncertainty, self.bins)
+				rules.append(r)
 
-		self.processed_learned_data = rules
+		self.processed_learned_data = sorted(rules, reverse=True)
 
 	def environmental_uncertainties(self):
 		frm = [f for substree in self.resolution_model for f in substree.collapse()]
@@ -224,3 +234,8 @@ class Context:
 		frm = [f for substree in self.resolution_model for f in substree.collapse()]
 		frm = [f for f in frm if f.feature_type == FeatureType.model]
 		return frm
+
+	def update_bins(self, new_bins):
+		self.bins = new_bins
+		re = self.raw_exploratory_results
+		self.process_exploratory_results(re)
