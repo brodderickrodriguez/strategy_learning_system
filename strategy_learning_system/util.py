@@ -68,25 +68,25 @@ def normalize_experiments(context, exp_df, digitize=True):
 
 
 def shape_outcomes(outcomes_dict):
-    # create a list containing the names of all the outcomes
-    keys = list(outcomes_dict.keys())
+	# create a list containing the names of all the outcomes
+	keys = list(outcomes_dict.keys())
 
-    # create and fill ndarray outcomes (4 dims)
-    # shape here is (<# outcomes>, <# experiments>, <# repetitions>, <# repetition length>)
-    outcomes = np.array([outcomes_dict[key] for key in keys])
+	# create and fill ndarray outcomes (4 dims)
+	# shape here is (<# outcomes>, <# experiments>, <# repetitions>, <# repetition length>)
+	outcomes = np.array([outcomes_dict[key] for key in keys])
 
-    # swap axis 0 and 1 so we get experiments as axis 0 (4 dims)
-    # shape here is (<# experiments>, <# outcomes>, <# repetitions>, <# repetition length>)
-    outcomes = np.swapaxes(outcomes, 0, 1)
+	# swap axis 0 and 1 so we get experiments as axis 0 (4 dims)
+	# shape here is (<# experiments>, <# outcomes>, <# repetitions>, <# repetition length>)
+	outcomes = np.swapaxes(outcomes, 0, 1)
 
-    # take the mean over all repetitions (3 dims)
-    # shape here is (<# experiments>, <# outcomes>, <# repetition length>)
-    outcomes = np.nanmean(outcomes, axis=2)
+	# take the mean over all repetitions (3 dims)
+	# shape here is (<# experiments>, <# outcomes>, <# repetition length>)
+	outcomes = np.nanmean(outcomes, axis=2)
 
-    # create a dictionary with all the outcomes:
-    # <key>: (<# experiments>, <# outcomes>, <# repetition length>)
+	# create a dictionary with all the outcomes:
+	# <key>: (<# experiments>, <# outcomes>, <# repetition length>)
 
-    return keys, outcomes
+	return keys, outcomes
 
 
 def process_ema_results(context, results):
