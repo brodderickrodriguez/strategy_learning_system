@@ -126,7 +126,7 @@ def plot_learned(context):
 			if len(y_x_data) > 0:
 				outcomes, confidences, experiences = zip(*structured_data[y_key][x_key])
 				confidence_weight = [c for c, e in zip(confidences, experiences)]
-				y_x_val = np.average(outcomes, weights=confidence_weight)
+				y_x_val = np.average(outcomes)
 
 			structured_data[y_key][x_key] = y_x_val
 
