@@ -18,12 +18,12 @@ class GenericConfiguration(xcsr.Configuration):
 
 		self.gamma = np.random.uniform(0.9, 0.99)
 
-		self.theta_mna = 1
+		self.theta_mna = 2
 
 		self.do_ga_subsumption = True
 
 		# length of an episode
-		self.steps_per_episode = 10 ** 4 * 1
+		self.steps_per_episode = 10 ** 4 * 5
 		self.episodes_per_replication = 1
 		self.is_multi_step = False
 
@@ -35,7 +35,7 @@ class GenericConfiguration(xcsr.Configuration):
 		self.F_1 = 0.0
 
 		# the maximum size of the population (in micro-classifiers)
-		self.N = 25
+		self.N = 50
 
 		# the GA threshold. GA is applied in a set when the average time
 		# since the last GA in the set is greater than theta_ga
@@ -58,8 +58,6 @@ class GenericConfiguration(xcsr.Configuration):
 		# probability during action selection of choosing the
 		# action uniform randomly
 		self.p_explr = 1.0
-
-		self.theta_mna = 8
 
 
 class GenericEnvironment(xcsr.Environment):
@@ -101,6 +99,7 @@ class GenericEnvironment(xcsr.Environment):
 		self.time_step += 1
 		rho = self._determine_rho(action)
 		self._set_state()
+
 		return rho
 
 	def _determine_rho(self, action):
@@ -108,13 +107,22 @@ class GenericEnvironment(xcsr.Environment):
 
 		expected_action = np.array(self.actions.loc[self._current_state_idx])
 
-		max_distance = ((self.max_value ** 2) * actual_action.shape[0]) ** (1 / 2)
+		max_action_distance = np.linalg.norm([self.max_value for _ in range(actual_action.shape[0])])
 
-		dist = np.linalg.norm(expected_action - actual_action)
+		action_distance = np.linalg.norm(action - expected_action)
 
-		rho = 1 - (dist / max_distance) * self.rhos[self._current_state_idx]
 
-		return rho
+		delta = 1 * (action_distance / max_action_distance)
+
+		rho = 1 * self.rhos[self._current_state_idx] - delta
+
+		# max_distance = ((self.max_value ** 2) * actual_action.shape[0]) ** (1 / 2)
+		#
+		# dist = np.linalg.norm(expected_action - actual_action)
+		#
+		# rho = 1 - (dist / max_distance) * self.rhos[self._current_state_idx]
+
+		return min(1.0, rho)
 
 	def termination_criteria_met(self):
 		return self.time_step >= self._max_steps
@@ -149,7 +157,7 @@ def _run_xcsr(env, config, data, save_loc):
 	driver.config_class = config
 	driver.env_class = env
 	driver.env_args = data
-	driver.replications = 2
+	driver.replications = 5
 	driver.save_location = save_loc
 	driver.experiment_name = 'learned_data'
 	classifiers = driver.run()
