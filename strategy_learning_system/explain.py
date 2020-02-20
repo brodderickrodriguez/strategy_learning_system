@@ -11,26 +11,44 @@ import pandas as pd
 import copy
 
 
-def plot_explored(context):
-	sns.set()
-	# axis0: y - environmental
-	# axis1: x - model
+# axis0: y - environmental
+# axis1: x - model
+_y_bin_delim = ' '
+_x_bin_delim = '\n'
 
-	y_delim, x_delim = ' ', '\n'
 
+def _get_axis_labels(context):
 	environmental = [f.name for f in context.environmental_uncertainties()]
 	model = [f.name for f in context.model_uncertainties()]
 
-	data = context.processed_exploratory_results
-	r = range(context.bins + 1) if isinstance(context.bins, int) else range(context.bins.shape[0])
+	r = range(context.bins.shape[0])
 	x_values = list(itertools.product(r, repeat=len(model)))
 	y_values = list(itertools.product(r, repeat=len(environmental)))
 
-	x_values = [x_delim.join(str(xi) for xi in x) for x in x_values]
-	y_values = [y_delim.join(str(yi) for yi in y) for y in y_values]
+	x_values = [_x_bin_delim.join(str(xi) for xi in x) for x in x_values]
+	y_values = [_y_bin_delim.join(str(yi) for yi in y) for y in y_values]
 
+	return x_values, y_values, model, environmental
+
+
+def _make_heat_map(structured_data):
+	sns.set()
+	data = pd.DataFrame.from_dict(structured_data, orient='index')
+	f, ax = plt.subplots(figsize=(12, 10))
+	sns.heatmap(data, annot=False, fmt="f", linewidths=.5, ax=ax)
+
+	plt.xlabel('Model Uncertainties')
+	plt.ylabel('Environmental Uncertainties')
+
+	plt.yticks(rotation=00)
+	plt.show()
+
+
+def plot_explored(context):
+	x_values, y_values, model, environmental = _get_axis_labels(context)
 	x_dict = {x: [] for x in x_values}
 	structured_data = {y: copy.deepcopy(x_dict) for y in y_values[::-1]}
+	data = context.processed_exploratory_results
 
 	def uncertainties_to_string(uncertainties, delim):
 		n = [int(n) for n in uncertainties]
@@ -39,112 +57,77 @@ def plot_explored(context):
 
 	for i in range(data.shape[0]):
 		row = data.iloc[i]
-
 		environmental_i = list(row[environmental])
 		model_i = list(row[model])
 		outcome = row['rho']
 
-		data_i_idx = uncertainties_to_string(environmental_i, y_delim)
-		data_j_idx = uncertainties_to_string(model_i, x_delim)
+		data_i_idx = uncertainties_to_string(environmental_i, _y_bin_delim)
+		data_j_idx = uncertainties_to_string(model_i, _x_bin_delim)
 		structured_data[data_i_idx][data_j_idx].append(outcome)
 
 	for i in structured_data:
 		for j in structured_data[i]:
 			structured_data[i][j] = np.nanmean(structured_data[i][j])
 
-	data = pd.DataFrame.from_dict(structured_data, orient='index')
+	_make_heat_map(structured_data)
 
-	f, ax = plt.subplots(figsize=(12, 10))
 
-	sns.heatmap(data, annot=False, fmt="f", linewidths=.5, ax=ax, center=0)
+def _get_bins_from_lb_ub(bins, lb, ub):
+	def _get(x):
+		try:
+			return bins.index(x)
+		except ValueError:
+			# check if left bin is closer in value than the right bin
+			for i in range(1, len(bins)):
+				if bins[i] > x:
+					if np.abs(bins[i - 1] - x) < np.abs(bins[i] - x):
+						return i - 1
+					else:
+						return i
 
-	# ax.text(-1, 0, environmental[0], rotation=45, fontsize=10)
-	# ax.text(-0.5, 0, environmental[1], rotation=45, fontsize=10)
-	# ax.text(25, 26.5, model[0], rotation=-25, fontsize=10)
-	# ax.text(25, 28, model[1], rotation=-25, fontsize=10)
-
-	plt.xlabel('Model Uncertainties')
-	plt.ylabel('Environmental Uncertainties')
-
-	plt.yticks(rotation=00)
-	plt.show()
+	a = _get(lb)
+	b = _get(ub)
+	return list(range(a, b + 1))
 
 
 def plot_learned(context):
-	sns.set()
-	# axis0: y - environmental
-	# axis1: x - model
-
-	y_delim, x_delim = ' ', '\n'
-
-	environmental = [f.name for f in context.environmental_uncertainties()]
-	model = [f.name for f in context.model_uncertainties()]
-
-	r = range(context.bins + 1) if isinstance(context.bins, int) else range(context.bins.shape[0])
-	x_values = list(itertools.product(r, repeat=len(model)))
-	y_values = list(itertools.product(r, repeat=len(environmental)))
-
-	x_values = [x_delim.join(str(xi) for xi in x) for x in x_values]
-	y_values = [y_delim.join(str(yi) for yi in y) for y in y_values]
-
+	x_values, y_values, model, environmental = _get_axis_labels(context)
 	x_dict = {x: [] for x in x_values}
 	structured_data = {y: copy.deepcopy(x_dict) for y in y_values[::-1]}
-	rules = context.processed_learned_data
-	rules = sorted(rules)
+	rules = sorted(context.processed_learned_data)[::-1]
 	context_bins = list(context.bins)
 
-	def get_bins_from_range(lb, ub):
-		a = context_bins.index(lb)
-		b = context_bins.index(ub)
-		return list(range(a, b + 1))
-
-	def bins_to_string_index(bins, d):
-		b = [d.join(str(xi) for xi in x) for x in bins]
-		return b
-
 	for rule in rules:
-		eu_bins, mu_bins = [], []
+		x_bins, y_bins = [], []
 
 		for eu, _, (lb, ub) in rule.environmental_uncertainties:
-			bins = get_bins_from_range(lb, ub)
-			eu_bins.append(bins)
+			y_bins_i = _get_bins_from_lb_ub(context_bins, lb, ub)
+			y_bins.append(y_bins_i)
 
 		for mu, _, (lb, ub) in rule.model_uncertainties:
-			bins = get_bins_from_range(lb, ub)
-			mu_bins.append(bins)
+			x_bins_i = _get_bins_from_lb_ub(context_bins, lb, ub)
+			x_bins.append(x_bins_i)
 
-		i_indexes = list(itertools.product(*eu_bins))
-		j_indexes = list(itertools.product(*mu_bins))
+		y_indexes = list(itertools.product(*y_bins))
+		x_indexes = list(itertools.product(*x_bins))
+		y_indexes = [_y_bin_delim.join(str(yi) for yi in y) for y in y_indexes]
+		x_indexes = [_x_bin_delim.join(str(xi) for xi in x) for x in x_indexes]
 
-		i_indexes = bins_to_string_index(i_indexes, y_delim)
-		j_indexes = bins_to_string_index(j_indexes, x_delim)
+		for y_idx in y_indexes:
+			for x_idx in x_indexes:
+				y_x_val = rule.outcome, rule.confidence, rule.experience
+				structured_data[y_idx][x_idx].append(y_x_val)
 
-		for i_index in i_indexes:
-			for j_index in j_indexes:
-				structured_data[i_index][j_index].append((rule.outcome, rule.confidence, rule.experience))
+	for y_key in structured_data:
+		for x_key in structured_data[y_key]:
+			y_x_val = np.nan
+			y_x_data = structured_data[y_key][x_key]
 
-	for i in structured_data:
-		for j in structured_data[i]:
-			if len(structured_data[i][j]) > 0:
-				outcomes, confidences, experiences = zip(*structured_data[i][j])
-				weights = [c * e for c, e in zip(confidences, experiences)]
-				structured_data[i][j] = np.average(outcomes, weights=weights)
-			else:
-				structured_data[i][j] = np.nan
+			if len(y_x_data) > 0:
+				outcomes, confidences, experiences = zip(*structured_data[y_key][x_key])
+				confidence_weight = [c for c, e in zip(confidences, experiences)]
+				y_x_val = np.average(outcomes, weights=confidence_weight)
 
-	data = pd.DataFrame.from_dict(structured_data, orient='index')
-	f, ax = plt.subplots(figsize=(12, 10))
-	sns.heatmap(data, annot=False, fmt="f", linewidths=.5, ax=ax, center=0)
+			structured_data[y_key][x_key] = y_x_val
 
-	plt.xlabel('Model Uncertainties')
-	plt.ylabel('Environmental Uncertainties')
-
-	plt.yticks(rotation=00)
-	plt.show()
-
-
-
-
-
-
-
+	_make_heat_map(structured_data)
