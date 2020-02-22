@@ -161,7 +161,6 @@ class ModelMediator:
 		# save the synthesized data to the context object
 		cxt.raw_exploratory_results = results
 
-	# TODO: incomplete
 	def learn(self, cxt):
 
 		assert isinstance(cxt, Context), '{} is not of type Context'
@@ -174,7 +173,6 @@ class ModelMediator:
 
 		return results
 
-	# TODO: incomplete
 	def explain(self, cxt):
 		explain.plot_learned(cxt)
 		explain.plot_explored(cxt)
