@@ -2,7 +2,6 @@
 # Auburn University - CSSE
 # 24 Aug. 2019
 
-import warnings
 import ema_workbench
 from ema_workbench.connectors.netlogo import NetLogoModel
 from ema_workbench import ema_logging, MultiprocessingEvaluator
