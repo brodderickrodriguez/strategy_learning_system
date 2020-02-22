@@ -171,7 +171,6 @@ class FeatureModel:
 	def collapse(self, subtree=None):
 		if subtree is None:
 			subtree = self._root
-
 		return subtree.collapse()
 
 	def add_sub_feature(self, feature, feature_type, constraint, netlogo_categorical_name=None):
