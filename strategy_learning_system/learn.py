@@ -23,7 +23,7 @@ class GenericConfiguration(xcsr.Configuration):
 		self.do_ga_subsumption = True
 
 		# length of an episode
-		self.steps_per_episode = 10 ** 4 * 5
+		self.steps_per_episode = 10 ** 4 * 2
 		self.episodes_per_replication = 1
 		self.is_multi_step = False
 
@@ -42,10 +42,11 @@ class GenericConfiguration(xcsr.Configuration):
 		self.theta_ga = 50
 
 		# the probability of applying crossover in the GA
-		self.chi = 0.33
+		self.chi = 0.15
 
 		# specifies the probability of mutating an allele in the offspring
-		self.mu = np.random.uniform(0.01, 0.05)
+		self.mu = np.random.uniform(0.001, 0.01)
+		self.mu = 0.25
 
 		# subsumption threshold. experience of a classifier must be greater
 		# than theta_sub in order to be able to subsume another classifier
@@ -72,6 +73,12 @@ class GenericEnvironment(xcsr.Environment):
 		self.possible_actions = self._get_possible_actions()
 
 		self.max_value = self._find_max_value(self.states, self.actions)
+		self.max_alpha_norm = np.linalg.norm([self.max_value for _ in range(self.state_shape[0])])
+
+
+		self.states = self.states.to_numpy()
+		self.actions = self.actions.to_numpy()
+		self.rhos = self.rhos.to_numpy()
 
 		self._set_state()
 
@@ -92,37 +99,31 @@ class GenericEnvironment(xcsr.Environment):
 
 	def _set_state(self):
 		self._current_state_idx = np.random.choice(len(self.states))
-		self._state = np.array(self.states.iloc[self._current_state_idx])
+		self._state = np.array(self.states[self._current_state_idx])
 
 	def step(self, action):
 		self.end_of_program = True
 		self.time_step += 1
 		rho = self._determine_rho(action)
 		self._set_state()
-
 		return rho
 
 	def _determine_rho(self, action):
-		actual_action = np.array(action)
+		alpha_hat = np.array(action)
 
-		expected_action = np.array(self.actions.loc[self._current_state_idx])
+		alpha = np.array(self.actions[self._current_state_idx])
 
-		max_action_distance = np.linalg.norm([self.max_value for _ in range(actual_action.shape[0])])
+		step_alpha_norm = np.linalg.norm(alpha_hat - alpha)
 
-		action_distance = np.linalg.norm(action - expected_action)
+		step_alpha_delta = step_alpha_norm / self.max_alpha_norm
 
+		rho = self.rhos[self._current_state_idx]
 
-		delta = 1 * (action_distance / max_action_distance)
+		gamma = 0.25
 
-		rho = 1 * self.rhos[self._current_state_idx] - delta
+		rho_hat = rho - (gamma * rho * step_alpha_delta)
 
-		# max_distance = ((self.max_value ** 2) * actual_action.shape[0]) ** (1 / 2)
-		#
-		# dist = np.linalg.norm(expected_action - actual_action)
-		#
-		# rho = 1 - (dist / max_distance) * self.rhos[self._current_state_idx]
-
-		return min(1.0, rho)
+		return rho_hat
 
 	def termination_criteria_met(self):
 		return self.time_step >= self._max_steps
@@ -157,7 +158,7 @@ def _run_xcsr(env, config, data, save_loc):
 	driver.config_class = config
 	driver.env_class = env
 	driver.env_args = data
-	driver.replications = 5
+	driver.replications = 2
 	driver.save_location = save_loc
 	driver.experiment_name = 'learned_data'
 	classifiers = driver.run()
