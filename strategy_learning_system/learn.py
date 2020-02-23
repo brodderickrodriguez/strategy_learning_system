@@ -119,9 +119,9 @@ class GenericEnvironment(xcsr.Environment):
 
 		rho = self.rhos[self._current_state_idx]
 
-		gamma = 0.25
+		zeta = 0.25
 
-		rho_hat = rho - (gamma * rho * step_alpha_delta)
+		rho_hat = rho - (zeta * rho * step_alpha_delta)
 
 		return rho_hat
 
