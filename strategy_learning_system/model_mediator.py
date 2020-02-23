@@ -168,11 +168,12 @@ class ModelMediator:
 		assert cxt.processed_exploratory_results is not None, 'this context has not been explored'
 
 		results = learn.learn(self, cxt)
-
 		cxt.raw_learned_results = results
-
 		return results
 
 	def explain(self, cxt):
-		explain.plot_learned(cxt)
-		explain.plot_explored(cxt)
+		if cxt.processed_exploratory_results is not None:
+			explain.plot_explored(cxt)
+
+		if cxt.processed_learned_data is not None:
+			explain.plot_learned(cxt)
