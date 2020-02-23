@@ -5,6 +5,7 @@
 import strategy_learning_system as sls
 import numpy as np
 import sys
+from sklearn.metrics import auc
 
 
 # for bcr 
@@ -128,40 +129,30 @@ def define_feature_model():
 
 
 def create():
-	_med = sls.ModelMediator(name=MEDIATOR_NAME)
-	_med.model = (MODEL_DIR, MODEL_FILE_NAME)
-	_med.netlogo = (NETLOGO_HOME, '6.0')
-	_med.feature_model = define_feature_model()
-	_med.save_location = SAVE_LOC
-	_med.save()
-	return _med
+	med = sls.ModelMediator(name=MEDIATOR_NAME)
+	med.model = (MODEL_DIR, MODEL_FILE_NAME)
+	med.netlogo = (NETLOGO_HOME, '6.0')
+	med.feature_model = define_feature_model()
+	med.save_location = SAVE_LOC
+	med.save()
+	return med
 
 
-def reward_function_1(outcome_keys, outcomes):
-	rewards = np.zeros((outcomes.shape[0]))
-
-	for i, experiment_outcomes in enumerate(outcomes):
-		d = {key: exp_out for key, exp_out in zip(outcome_keys, experiment_outcomes)}
-		rho = d['coverage-percentage'][-1]
-		rewards[i] = rho
-
-	return rewards
-
-
+# this has to be here because the pickled mediator is looking for it
+# by name. It does not impact performance. Only causes a runtime error if removed.
 def reward_function_2(outcome_keys, outcomes):
+	pass
+
+
+def area_under_curve(outcome_keys, outcomes):
 	rewards = np.zeros((outcomes.shape[0]))
-	episode_dim = outcomes.shape[2]
-	t_vec = np.linspace(0.0, 1.0, episode_dim)
-	critical_points_interval = int(episode_dim / 5)
+	x = np.arange(0, outcomes.shape[2])
 
 	for i, experiment_outcomes in enumerate(outcomes):
 		d = {key: exp_out for key, exp_out in zip(outcome_keys, experiment_outcomes)}
-		xi = d['coverage-percentage']
-
-		f1 = np.mean(xi - t_vec)
-		f2 = np.mean(xi[::critical_points_interval])
-		zi = (2/3) * f1 + (1/3) * f2
-		rewards[i] = zi
+		cov_per = d['coverage-percentage']
+		auc_i = auc(x, cov_per)
+		rewards[i] = auc_i
 
 	r_min = np.min(rewards)
 	r_max = np.max(rewards)
@@ -169,125 +160,189 @@ def reward_function_2(outcome_keys, outcomes):
 	return rewards
 
 
-def create_context1(mediator):
-	cxt1_resolution = []
-	cxt1_resolution.append(mediator.feature_model['coverage-percentage'])
-	cxt1_resolution.append(mediator.feature_model['population'])
-	cxt1_resolution.append(mediator.feature_model['coverage-data-decay'])
+# VALIDATION EXPERIMENT 1
+# zeta = 0.5
+def create_validation_1(med):
+	resolution = []
+	resolution.append(med.feature_model['population'])
+	resolution.append(med.feature_model['number-plumes'])
+	resolution.append(med.feature_model['coverage-percentage'])
 
-	cxt1_resolution.append(mediator.feature_model['wind-speed'])
-	cxt1_resolution.append(mediator.feature_model['number-plumes'])
+	cxt = sls.Context(name='simple_valid')
+	cxt.reward_function = area_under_curve
+	cxt.resolution_model = resolution
 
-	cxt = sls.Context(name='context1')
-	cxt.reward_function = reward_function_2
-	cxt.resolution_model = cxt1_resolution
-
-	cxt.bins = np.linspace(0.0, 1.0, 5)
-	cxt.num_experiments = 625
+	cxt.bins = np.linspace(0, 1, 5)
+	cxt.num_experiments = 30
 	cxt.num_replications = 10
 	cxt.max_run_length = 1000
 	cxt.num_processes = 11
 	return cxt
 
 
-def run_context1():
-	# med = create()
+def run_validation_1():
+	print('experiment: validation 1')
 	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# print(med)
-	# print(med.feature_model)
-
-	# cxt1 = create_context1(med)
-	cxt1 = med['context1']
-
-	cxt1.reward_function = reward_function_2
-	cxt1.bins = np.linspace(0.0, 1.0, 5)
-	# print(cxt1.resolution_model)
-	# med.evaluate_context(cxt1)
+	# cxt = create_validation_1(med)
+	# med.evaluate_context(cxt)
 	# med.save()
 
-	# raw = cxt1.raw_exploratory_results
-	# cxt1.process_exploratory_results(raw)
+	cxt = med['simple_valid']
+	# med.learn(cxt)
+	# med.save()
+
+	med.explain(cxt)
 
 
-	# med.learn(cxt1)
-
-	med.explain(cxt1)
-
-	med.save()
-
-
-# run_context1()
-
-
-
-def create_context2(mediator):
-	cxt1_resolution = []
-	cxt1_resolution.append(mediator.feature_model['coverage-percentage'])
-	cxt1_resolution.append(mediator.feature_model['population'])
-	cxt1_resolution.append(mediator.feature_model['coverage-data-decay'])
-
-	cxt1_resolution.append(mediator.feature_model['wind-speed'])
-	cxt1_resolution.append(mediator.feature_model['number-plumes'])
+# VALIDATION EXPERIMENT 2
+# zeta = 0.25
+def create_validation_2(mediator):
+	resolution = []
+	resolution.append(mediator.feature_model['population'])
+	resolution.append(mediator.feature_model['coverage-data-decay'])
+	resolution.append(mediator.feature_model['wind-speed'])
+	resolution.append(mediator.feature_model['number-plumes'])
+	resolution.append(mediator.feature_model['coverage-percentage'])
 
 	cxt = sls.Context(name='context2')
-	cxt.reward_function = reward_function_2
-	cxt.resolution_model = cxt1_resolution
+	cxt.reward_function = area_under_curve
+	cxt.resolution_model = resolution
 
 	cxt.bins = np.linspace(0.0, 1.0, 3)
 	cxt.num_experiments = 62
-	cxt.num_replications = 10
+	cxt.num_replications = 30
 	cxt.max_run_length = 1000
 	cxt.num_processes = 11
 	return cxt
 
 
-def run_context2():
+def run_validation_2():
+	print('experiment: validation 2')
 	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_context2(med)
-	cxt = med['context2']
+	# cxt = create_validation_2(med)
 	# med.evaluate_context(cxt)
-
-	# med.learn(cxt)
-	med.explain(cxt)
 	# med.save()
-	print(cxt.processed_learned_data)
+
+	cxt = med['context2']
+	# med.learn(cxt)
+	# med.save()
+
+	med.explain(cxt)
 
 
-run_context2()
-
-
-def create_flock_context(mediator):
+# EXPLORATORY EXPERIMENT 1
+# zeta = 0.25
+def create_exploratory_1(mediator):
 	resolution = []
-	resolution.append(mediator.feature_model['coverage-percentage'])
-	resolution.append(mediator.feature_model['\"flock-search\"'])
+	resolution.append(mediator.feature_model['\"symmetric-search\"'])
+	resolution.append(mediator.feature_model['number-plumes'])
 	resolution.append(mediator.feature_model['UAV-vision'])
-	resolution.append(mediator.feature_model['UAV-decontamination-strength'])
-	resolution.append(mediator.feature_model['wind'])
-	cxt = sls.Context(name='flock_context')
-	cxt.reward_function = reward_function_2
+	resolution.append(mediator.feature_model['coverage-percentage'])
+
+	cxt = sls.Context(name='exploratory_exp_1_new')
+	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
-	cxt.bins = np.linspace(0.0, 1.0, 2)
-	cxt.num_experiments = 500
-	cxt.num_replications = 10
-	cxt.max_run_length = 1000
-	cxt.num_processes = 11
-	return cxt
-
-
-def run_flock_context():
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	cxt = med['flock_context']
-	# cxt = create_flock_context(med)
-	# med.evaluate_context(cxt)
 
 	cxt.bins = np.linspace(0.0, 1.0, 3)
-	raw = cxt.raw_exploratory_results
-	cxt.process_exploratory_results(raw)
-	print(cxt.processed_exploratory_results.to_string())
+	cxt.num_experiments = 150
+	cxt.num_replications = 30
+	cxt.max_run_length = 1000
+	cxt.num_processes = 12
+	return cxt
+
+
+def run_exploratory_1():
+	print('experiment: exploratory 1')
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	# cxt = create_exploratory_1(med)
+	# med.evaluate_context(cxt)
+	# med.save()
+
+	cxt = med['exploratory_exp_1_new']
 	# med.learn(cxt)
+	# med.save()
+
 	med.explain(cxt)
 
-	med.save()
+
+# EXPLORATORY EXPERIMENT 2
+# zeta = 0.25
+def create_exploratory_2(mediator):
+	resolution = []
+	resolution.append(mediator.feature_model['\"flock-search\"'])
+	resolution.append(mediator.feature_model['number-plumes'])
+	resolution.append(mediator.feature_model['UAV-vision'])
+	resolution.append(mediator.feature_model['coverage-percentage'])
+
+	# exploratory_exp_2_new_new_this_one
+
+	cxt = sls.Context(name='exploratory_exp_4')
+	cxt.reward_function = area_under_curve
+	cxt.resolution_model = resolution
+
+	cxt.bins = np.linspace(0.0, 1.0, 3)
+	cxt.num_experiments = 200
+	cxt.num_replications = 30
+	cxt.max_run_length = 1000
+	cxt.num_processes = 12
+	return cxt
 
 
-# run_flock_context()
+def run_exploratory_2():
+	print('experiment: exploratory 2')
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	# cxt = create_exploratory_2(med)
+	# med.evaluate_context(cxt)
+	# med.save()
+
+	cxt = med['exploratory_exp_4']
+	# med.learn(cxt)
+	# med.save()
+
+	med.explain(cxt)
+
+
+# TODO: experiment not completed due to scope of research
+def create_generalization_1(mediator):
+	resolution = []
+	resolution.append(mediator.feature_model['population'])
+	resolution.append(mediator.feature_model['coverage-data-decay'])
+	resolution.append(mediator.feature_model['wind-speed'])
+	resolution.append(mediator.feature_model['number-plumes'])
+	resolution.append(mediator.feature_model['coverage-percentage'])
+
+	cxt = sls.Context(name='exploratory_exp_3_new')
+	cxt.reward_function = area_under_curve
+	cxt.resolution_model = resolution
+
+	cxt.bins = np.linspace(0.0, 1.0, 3)
+	cxt.num_experiments = 162
+	cxt.num_replications = 30
+	cxt.max_run_length = 1000
+	cxt.num_processes = 11
+	return cxt
+
+
+# TODO: experiment not completed due to scope of research
+def run_generalization_1():
+	print('experiment: generalization 1')
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	# cxt = create_exploratory_3(med)
+	# med.evaluate_context(cxt)
+	# med.save()
+
+	cxt = med['exploratory_exp_3_new']
+	# med.learn(cxt)
+	# med.save()
+
+	med.explain(cxt)
+
+
+if __name__ == '__main__':
+	print('SLS: contaminant plume model')
+	# run_validation_1()
+	# run_validation_2()
+	# run_exploratory_1()
+	# run_exploratory_2()
+	# run_generalization_1()
+	pass
