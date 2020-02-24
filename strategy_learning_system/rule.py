@@ -8,8 +8,8 @@ class Rule:
 		self.model_uncertainties = []
 		self.environmental_uncertainties = []
 		self.outcome = 0
-		self.confidence = 0
-		self.experience = 0
+		self.confidence = 1
+		self.experience = 1
 		self.classifier = classifier
 
 	def __str__(self):
