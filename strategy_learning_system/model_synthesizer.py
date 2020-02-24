@@ -46,9 +46,7 @@ def _determine_parameters(mediator, context):
 	resolution_uncertainties = [f for f in resolution if not is_outcome(f) and is_ema_object(f)]
 	resolution_outcomes = [f for f in resolution if is_outcome(f) and is_ema_object(f)]
 
-	context.all_parameters = constants + resolution_uncertainties + resolution_outcomes
-
-	# context.resolution_model = constants + resolution_uncertainties + resolution_outcomes
+	context.resolution_model = constants + resolution_uncertainties + resolution_outcomes
 	return resolution_uncertainties, resolution_outcomes, constants
 
 
