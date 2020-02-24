@@ -44,19 +44,18 @@ def _make_heat_map(structured_data):
 	plt.show()
 
 
-def plot_explored(context):
+def plot_from_data_frame(context, data_frame):
 	x_values, y_values, model, environmental = _get_axis_labels(context)
 	x_dict = {x: [] for x in x_values}
 	structured_data = {y: copy.deepcopy(x_dict) for y in y_values[::-1]}
-	data = context.processed_exploratory_results
 
 	def uncertainties_to_string(uncertainties, delim):
 		n = [int(n) for n in uncertainties]
 		s = delim.join(str(ni) for ni in n)
 		return s
 
-	for i in range(data.shape[0]):
-		row = data.iloc[i]
+	for i in range(data_frame.shape[0]):
+		row = data_frame.iloc[i]
 		environmental_i = list(row[environmental])
 		model_i = list(row[model])
 		outcome = row['rho']
@@ -70,6 +69,11 @@ def plot_explored(context):
 			structured_data[i][j] = np.nanmean(structured_data[i][j])
 
 	_make_heat_map(structured_data)
+
+
+def plot_explored(context):
+	data = context.processed_exploratory_results
+	plot_from_data_frame(context, data)
 
 
 def _get_bins_from_lb_ub(bins, lb, ub):
@@ -126,7 +130,7 @@ def plot_learned(context):
 			if len(y_x_data) > 0:
 				outcomes, confidences, experiences = zip(*structured_data[y_key][x_key])
 				confidence_weight = [c for c, e in zip(confidences, experiences)]
-				y_x_val = np.average(outcomes)
+				y_x_val = np.average(outcomes, weights=confidence_weight)
 
 			structured_data[y_key][x_key] = y_x_val
 
