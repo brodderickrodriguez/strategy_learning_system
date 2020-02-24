@@ -147,19 +147,30 @@ class FeatureModel:
 	def __iter__(self):
 		return self._root.collapse().__iter__()
 
-	def __getitem__(self, item):
+	def _recurse_get_item(self, item, include_children):
 		def _subtree_rec(current):
 			if current.name == item:
+				if not include_children:
+					current_ = copy.deepcopy(current)
+					current_._sub_features = tuple()
+					return current_
 				return current
 			else:
 				for sub_feature_edge in current.sub_features:
 					r = _subtree_rec(sub_feature_edge)
-
 					if r is not None:
 						return r
 
-		features = _subtree_rec(self._root)
-		return features
+		features_ = _subtree_rec(self._root)
+		return features_
+
+	def get_item(self, item, include_children=True):
+		features_ = self._recurse_get_item(item, include_children=include_children)
+		return features_
+
+	def __getitem__(self, item):
+		features_ = self._recurse_get_item(item, include_children=True)
+		return features_
 
 	def __contains__(self, item):
 		for p in list(self.__iter__()):
