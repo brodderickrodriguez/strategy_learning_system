@@ -302,6 +302,7 @@ def run_exploratory_2():
 	med.explain(cxt)
 
 
+	cxt.max_run_length = 1000
 # TODO: experiment not completed due to scope of research
 def create_generalization_1(mediator):
 	resolution = []
