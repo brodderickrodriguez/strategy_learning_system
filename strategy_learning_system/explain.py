@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import itertools
 import pandas as pd
 import copy
+import warnings
 
 
 # axis0: y - environmental
@@ -64,9 +65,13 @@ def plot_from_data_frame(context, data_frame):
 		data_j_idx = uncertainties_to_string(model_i, _x_bin_delim)
 		structured_data[data_i_idx][data_j_idx].append(outcome)
 
-	for i in structured_data:
-		for j in structured_data[i]:
-			structured_data[i][j] = np.nanmean(structured_data[i][j])
+	# ignore mean of empty slice runtime warning
+	with warnings.catch_warnings():
+		warnings.simplefilter("ignore")
+
+		for i in structured_data:
+			for j in structured_data[i]:
+				structured_data[i][j] = np.nanmean(structured_data[i][j])
 
 	_make_heat_map(structured_data)
 
@@ -88,6 +93,7 @@ def _get_bins_from_lb_ub(bins, lb, ub):
 						return i - 1
 					else:
 						return i
+			return 0
 
 	a = _get(lb)
 	b = _get(ub)
