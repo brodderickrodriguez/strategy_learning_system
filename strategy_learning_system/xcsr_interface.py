@@ -181,7 +181,7 @@ def _rule_from_classifier(classifier, env_uncertainty, mod_uncertainty, bins):
 		r = lambda p: p * (uncertainty.upper_bound - uncertainty.lower_bound) + uncertainty.lower_bound
 		a, b = r(f_range[0]), r(f_range[1])
 
-		if isinstance(eu, IntegerParameter):
+		if isinstance(uncertainty, IntegerParameter):
 			a, b = int(a), int(b)
 
 		return a, b
