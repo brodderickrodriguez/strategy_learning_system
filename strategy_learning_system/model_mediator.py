@@ -144,7 +144,7 @@ class ModelMediator:
 		assert isinstance(cxt, Context), '{} is not of type Context'.format(cxt)
 
 		# make sure the cxt name is unique
-		# assert cxt not in self._contexts, 'a context with name {} already exists'.format(cxt.name)
+		assert cxt not in self._contexts, 'a context with name {} already exists'.format(cxt.name)
 
 		# make sure the user has specified something in the Context.resolution_model
 		assert len(cxt.resolution_model) > 0, '{} has resolution_model to evaluate'.format(cxt.name)
@@ -161,15 +161,14 @@ class ModelMediator:
 		# save the synthesized data to the context object
 		cxt.raw_exploratory_results = results
 
-	def learn(self, cxt):
-
+	def learn(self, cxt, algorithm='ann_hac'):
 		assert isinstance(cxt, Context), '{} is not of type Context'
 
 		assert cxt.processed_exploratory_results is not None, 'this context has not been explored'
 
-		results = learn.learn(self, cxt)
-		cxt.raw_learned_results = results
-		return results
+		rules = learn.learn(self, cxt, algorithm)
+		cxt.processed_learned_data = rules
+		return rules
 
 	def explain(self, cxt):
 		if cxt.processed_exploratory_results is not None:
