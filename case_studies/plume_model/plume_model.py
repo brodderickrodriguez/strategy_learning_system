@@ -138,6 +138,7 @@ def create():
 	return med
 
 
+# TODO: delete before publishing
 # this has to be here because the pickled mediator is looking for it
 # by name. It does not impact performance. Only causes a runtime error if removed.
 def reward_function_2(outcome_keys, outcomes):
@@ -302,7 +303,42 @@ def run_exploratory_2():
 	med.explain(cxt)
 
 
+# EXPLORATORY EXPERIMENT Search Policy
+# zeta = 0.25
+def create_exploratory_search_policy(mediator):
+	resolution = []
+	resolution.append(mediator.feature_model.get_item('global-search-policy', include_children=False))
+	resolution.append(mediator.feature_model['population'])
+	resolution.append(mediator.feature_model['number-plumes'])
+	resolution.append(mediator.feature_model['wind-speed'])
+	resolution.append(mediator.feature_model['coverage-percentage'])
+
+	cxt = sls.Context(name='exploratory_exp_search_policy_5')
+	cxt.reward_function = area_under_curve
+	cxt.resolution_model = resolution
+
+	cxt.bins = np.linspace(0.0, 1.0, 3)
+	cxt.num_experiments = 50
+	cxt.num_replications = 10
 	cxt.max_run_length = 1000
+	cxt.num_processes = 12
+	return cxt
+
+
+def run_exploratory_search_policy():
+	print('experiment: exploratory search policy')
+	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+	# cxt = create_exploratory_search_policy(med)
+	# med.evaluate_context(cxt)
+	# med.save()
+
+	cxt = med['exploratory_exp_search_policy_5']
+	# med.learn(cxt, algorithm='ann_hac')
+	# med.save()
+
+	med.explain(cxt)
+
+
 # TODO: experiment not completed due to scope of research
 def create_generalization_1(mediator):
 	resolution = []
@@ -345,5 +381,6 @@ if __name__ == '__main__':
 	# run_validation_2()
 	# run_exploratory_1()
 	# run_exploratory_2()
+	run_exploratory_search_policy()
 	# run_generalization_1()
 	pass
