@@ -97,6 +97,8 @@ class ModelMediator:
 	def feature_model(self, v):
 		self._feature_model = v
 
+	features = feature_model
+
 	@property
 	def save_location(self):
 		return self._save_location
