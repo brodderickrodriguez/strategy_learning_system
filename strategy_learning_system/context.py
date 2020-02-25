@@ -2,10 +2,8 @@
 # Auburn University - CSSE
 # 25 Aug. 2019
 
-import os
 from . import util
 import numpy as np
-import pickle
 from .feature_model import FeatureType, Feature
 
 
@@ -75,50 +73,6 @@ class Context:
 		if f not in self.resolution_model:
 			self.resolution_model.append(f)
 
-	@property
-	def raw_exploratory_results(self):
-		# define a path to the raw exploratory results for this context
-		path = Context.RAW_EXPL_RES_PATH.format(self.data_path, self.name)
-
-		# assert that the path exists
-		# i.e. the exploration process has be done
-		assert os.path.exists(path), 'the exploration data cannot be found for {}'.format(self.name)
-
-		# use pickle to load and convert the byte stream to exploration data
-		with open(path, 'rb') as f:
-			return pickle.load(f)
-
-	@raw_exploratory_results.setter
-	def raw_exploratory_results(self, v):
-		# define a path to the raw exploratory results for this context
-		path = Context.RAW_EXPL_RES_PATH.format(self.data_path, self.name)
-
-		# save the raw exploratory results using pickle byte steam
-		with open(path, 'wb') as f:
-			pickle.dump(v, f)
-
-		# call the process function to process the exploration data
-		self.process_exploratory_results(v)
-	
-	def process_exploratory_results(self, results):
-		# reshape and normalize the exploratory results data
-		results = util.process_ema_results(context=self, results=results)
-
-		# separate experiments and outcomes
-		experiments = results['experiments']
-
-		# call the user-designed reward function to convert raw outcomes to reward
-		outcomes = self.reward_function(*results['outcomes'])
-
-		# create a new panda data frame to contain all the data
-		data = experiments.copy()
-
-		# insert the reward to the last column in the new data frame
-		data.insert(len(data.columns), 'rho', outcomes)
-
-		# set the processed results to a variable
-		self.processed_exploratory_results = data
-
 	def environmental_uncertainties(self):
 		frm = [f for substree in self.collapsed_resolution_model() for f in substree.collapse()]
 		frm = [f for f in frm if f.feature_type == FeatureType.environmental]
@@ -128,8 +82,3 @@ class Context:
 		frm = [f for substree in self.collapsed_resolution_model() for f in substree.collapse()]
 		frm = [f for f in frm if f.feature_type == FeatureType.model]
 		return frm
-
-	def update_bins(self, new_bins):
-		self.bins = new_bins
-		re = self.raw_exploratory_results
-		self.process_exploratory_results(re)

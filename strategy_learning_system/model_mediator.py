@@ -4,7 +4,7 @@
 
 import os
 import pickle
-from . import model_synthesizer, learn, util, explain
+from . import explore, learn, util, explain
 from .context import Context
 
 
@@ -157,21 +157,32 @@ class ModelMediator:
 		self._contexts.append(cxt)
 
 		# call the synthesizer to collect model data
-		results = model_synthesizer.synthesize(self, cxt)
+		results = explore.explore(self, cxt)
 
 		# save the synthesized data to the context object
-		cxt.raw_exploratory_results = results
+		cxt.processed_exploratory_results = results
+
+		# return the data for fast access
+		return results
 
 	def learn(self, cxt, algorithm='ann_hac'):
+		# make sure cxt is of time Context
 		assert isinstance(cxt, Context), '{} is not of type Context'
 
+		# make sure the context has been explored
 		assert cxt.processed_exploratory_results is not None, 'this context has not been explored'
 
+		# call the learning module and collect the learned rules
 		rules = learn.learn(self, cxt, algorithm)
+
+		# save the learned rules to the context object
 		cxt.processed_learned_data = rules
+
+		# return the rules for fast access
 		return rules
 
-	def explain(self, cxt):
+	@staticmethod
+	def explain(cxt):
 		if cxt.processed_exploratory_results is not None:
 			explain.plot_explored(cxt)
 
