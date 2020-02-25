@@ -8,7 +8,7 @@ import sys
 from sklearn.metrics import auc
 
 
-# for bcr 
+# for bcr
 if sys.platform == 'darwin':
 	ROOT = '/Users/bcr/Dropbox/projects'
 	NETLOGO_HOME = '/Applications/NetLogo-6.0.4/'
@@ -77,14 +77,14 @@ def define_feature_model():
 	uav_capacity.add_sub_feature(uav_decon_strength, sls.FeatureType.environmental, sls.Constraint.optional)
 
 	# swam search behavior
-	seach_lookup = {'flock': '\"flock-search\"', 'random': '\"random-search\"', 'symmetric': '\"symmetric-search\"'}
+	search_lookup = {'flock': '\"flock-search\"', 'random': '\"random-search\"', 'symmetric': '\"symmetric-search\"'}
 
 	# swarm search behavior flock policy
 	min_sep = sls.RealParameter('minimum-separation', 0, 5, default=0.75)
 	max_align = sls.RealParameter('max-align-turn', 0, 20, default=0.0)
 	max_cohere = sls.RealParameter('max-cohere-turn', 0, 10, default=1.9)
 	max_separate = sls.RealParameter('max-separate-turn', 0, 20, default=4.75)
-	flock_policy = sls.Feature(seach_lookup['flock'])
+	flock_policy = sls.Feature(search_lookup['flock'])
 	flock_policy.add_sub_feature(min_sep, sls.FeatureType.model, sls.Constraint.mandatory)
 	flock_policy.add_sub_feature(max_align, sls.FeatureType.model, sls.Constraint.mandatory)
 	flock_policy.add_sub_feature(max_cohere, sls.FeatureType.model, sls.Constraint.mandatory)
@@ -93,7 +93,7 @@ def define_feature_model():
 	# swarm search behavior random policy
 	rand_max_heading_time = sls.IntegerParameter('random-search-max-heading-time', 0, 100, default=26)
 	rand_max_turn = sls.RealParameter('random-search-max-turn', 0, 5, default=1.45)
-	random_policy = sls.Feature(seach_lookup['random'])
+	random_policy = sls.Feature(search_lookup['random'])
 	random_policy.add_sub_feature(rand_max_heading_time, sls.FeatureType.model, sls.Constraint.mandatory)
 	random_policy.add_sub_feature(rand_max_turn, sls.FeatureType.model, sls.Constraint.mandatory)
 
@@ -102,17 +102,17 @@ def define_feature_model():
 	sym_region_threshold = sls.RealParameter('symmetric-search-region-threshold', -10, 25, default=-0.5)
 	sym_min_region_time = sls.IntegerParameter('symmetric-search-min-region-time', 1, int(1e3), default=50)
 	sym_max_region_time = sls.IntegerParameter('symmetric-search-max-region-time', int(1e2), int(5e3), default=1800)
-	symmetric_policy = sls.Feature(seach_lookup['symmetric'])
+	symmetric_policy = sls.Feature(search_lookup['symmetric'])
 	symmetric_policy.add_sub_feature(sym_max_turn, sls.FeatureType.model, sls.Constraint.mandatory)
 	symmetric_policy.add_sub_feature(sym_region_threshold, sls.FeatureType.model, sls.Constraint.mandatory)
 	symmetric_policy.add_sub_feature(sym_min_region_time, sls.FeatureType.model, sls.Constraint.mandatory)
 	symmetric_policy.add_sub_feature(sym_max_region_time, sls.FeatureType.model, sls.Constraint.mandatory)
 
 	#swarm search behavior
-	search_behavior = sls.CategoricalParameter('global-search-policy', categories=list(seach_lookup.values()), default=seach_lookup['flock'])
-	search_behavior.add_sub_feature(flock_policy, sls.FeatureType.model, sls.Constraint.xor, seach_lookup['flock'])
-	search_behavior.add_sub_feature(random_policy, sls.FeatureType.model, sls.Constraint.xor, seach_lookup['random'])
-	search_behavior.add_sub_feature(symmetric_policy, sls.FeatureType.model, sls.Constraint.xor, seach_lookup['symmetric'])
+	search_behavior = sls.CategoricalParameter('global-search-policy', categories=list(search_lookup.values()), default=search_lookup['flock'])
+	search_behavior.add_sub_feature(flock_policy, sls.FeatureType.model, sls.Constraint.xor, search_lookup['flock'])
+	search_behavior.add_sub_feature(random_policy, sls.FeatureType.model, sls.Constraint.xor, search_lookup['random'])
+	search_behavior.add_sub_feature(symmetric_policy, sls.FeatureType.model, sls.Constraint.xor, search_lookup['symmetric'])
 
 	# swarm
 	pop = sls.IntegerParameter('population', 2, 100, default=12)
@@ -128,14 +128,15 @@ def define_feature_model():
 	return feature_model
 
 
-def create():
-	med = sls.ModelMediator(name=MEDIATOR_NAME)
-	med.model = (MODEL_DIR, MODEL_FILE_NAME)
-	med.netlogo = (NETLOGO_HOME, '6.0')
-	med.feature_model = define_feature_model()
-	med.save_location = SAVE_LOC
-	med.save()
-	return med
+def create_plume_mediator():
+	mediator = sls.ModelMediator(name=MEDIATOR_NAME)
+	mediator.model = (MODEL_DIR, MODEL_FILE_NAME)
+	mediator.netlogo = (NETLOGO_HOME, '6.0')
+	mediator.feature_model = define_feature_model()
+	mediator.save_location = SAVE_LOC
+	mediator.save()
+	return mediator
+
 
 
 # TODO: delete before publishing
@@ -161,21 +162,26 @@ def area_under_curve(outcome_keys, outcomes):
 	return rewards
 
 
+# plume_mediator = create_plume_mediator()
+plume_mediator = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+
+
+
 # VALIDATION EXPERIMENT 1
 # zeta = 0.5
-def create_validation_1(med):
+def create_validation_1(exp_name):
 	resolution = []
-	resolution.append(med.feature_model['population'])
-	resolution.append(med.feature_model['number-plumes'])
-	resolution.append(med.feature_model['coverage-percentage'])
+	resolution.append(plume_mediator.features['population'])
+	resolution.append(plume_mediator.features['number-plumes'])
+	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	cxt = sls.Context(name='simple_valid')
+	cxt = sls.Context(name=exp_name)
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
 	cxt.bins = np.linspace(0, 1, 5)
 	cxt.num_experiments = 30
-	cxt.num_replications = 10
+	cxt.num_replications = 30
 	cxt.max_run_length = 1000
 	cxt.num_processes = 11
 	return cxt
@@ -183,29 +189,31 @@ def create_validation_1(med):
 
 def run_validation_1():
 	print('experiment: validation 1')
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_validation_1(med)
-	# med.evaluate_context(cxt)
-	# med.save()
+	exp_name = 'simple_valid_4'
+	# cxt = create_validation_1(exp_name)
+	# plume_mediator.evaluate_context(cxt)
+	# plume_mediator.save()
 
-	cxt = med['simple_valid']
-	# med.learn(cxt)
-	# med.save()
+	cxt = plume_mediator[exp_name]
+	# plume_mediator.learn(cxt, algorithm='ann_hac')
+	# plume_mediator.save()
 
-	med.explain(cxt)
+	# plume_mediator.explain(cxt)
+
+	print(plume_mediator.features)
 
 
 # VALIDATION EXPERIMENT 2
 # zeta = 0.25
-def create_validation_2(mediator):
+def create_validation_2(exp_name):
 	resolution = []
-	resolution.append(mediator.feature_model['population'])
-	resolution.append(mediator.feature_model['coverage-data-decay'])
-	resolution.append(mediator.feature_model['wind-speed'])
-	resolution.append(mediator.feature_model['number-plumes'])
-	resolution.append(mediator.feature_model['coverage-percentage'])
+	resolution.append(plume_mediator.features['population'])
+	resolution.append(plume_mediator.features['coverage-data-decay'])
+	resolution.append(plume_mediator.features['wind-speed'])
+	resolution.append(plume_mediator.features['number-plumes'])
+	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	cxt = sls.Context(name='context2')
+	cxt = sls.Context(name=exp_name)
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
@@ -219,28 +227,29 @@ def create_validation_2(mediator):
 
 def run_validation_2():
 	print('experiment: validation 2')
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_validation_2(med)
-	# med.evaluate_context(cxt)
-	# med.save()
+	exp_name = 'context2'
 
-	cxt = med['context2']
-	# med.learn(cxt)
-	# med.save()
+	# cxt = create_validation_2(exp_name)
+	# plume_mediator.evaluate_context(cxt)
+	# plume_mediator.save()
 
-	med.explain(cxt)
+	cxt = plume_mediator[exp_name]
+	plume_mediator.learn(cxt, algorithm='ann_hac')
+	# plume_mediator.save()
+
+	plume_mediator.explain(cxt)
 
 
 # EXPLORATORY EXPERIMENT 1
 # zeta = 0.25
-def create_exploratory_1(mediator):
+def create_exploratory_1(exp_name):
 	resolution = []
-	resolution.append(mediator.feature_model['\"symmetric-search\"'])
-	resolution.append(mediator.feature_model['number-plumes'])
-	resolution.append(mediator.feature_model['UAV-vision'])
-	resolution.append(mediator.feature_model['coverage-percentage'])
+	resolution.append(plume_mediator.features['\"symmetric-search\"'])
+	resolution.append(plume_mediator.features['number-plumes'])
+	resolution.append(plume_mediator.features['UAV-vision'])
+	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	cxt = sls.Context(name='exploratory_exp_1_new')
+	cxt = sls.Context(name=exp_name)
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
@@ -254,30 +263,28 @@ def create_exploratory_1(mediator):
 
 def run_exploratory_1():
 	print('experiment: exploratory 1')
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_exploratory_1(med)
-	# med.evaluate_context(cxt)
-	# med.save()
+	exp_name = 'exploratory_exp_1_new'
+	# cxt = create_exploratory_1(exp_name)
+	# plume_mediator.evaluate_context(cxt)
+	# plume_mediator.save()
 
-	cxt = med['exploratory_exp_1_new']
-	# med.learn(cxt)
-	# med.save()
+	cxt = plume_mediator[exp_name]
+	# plume_mediator.learn(cxt)
+	# plume_mediator.save()
 
-	med.explain(cxt)
+	plume_mediator.explain(cxt)
 
 
 # EXPLORATORY EXPERIMENT 2
 # zeta = 0.25
-def create_exploratory_2(mediator):
+def create_exploratory_2(exp_name):
 	resolution = []
-	resolution.append(mediator.feature_model['\"flock-search\"'])
-	resolution.append(mediator.feature_model['number-plumes'])
-	resolution.append(mediator.feature_model['UAV-vision'])
-	resolution.append(mediator.feature_model['coverage-percentage'])
+	resolution.append(plume_mediator.features['\"flock-search\"'])
+	resolution.append(plume_mediator.features['number-plumes'])
+	resolution.append(plume_mediator.features['UAV-vision'])
+	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	# exploratory_exp_2_new_new_this_one
-
-	cxt = sls.Context(name='exploratory_exp_4')
+	cxt = sls.Context(name=exp_name)
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
@@ -291,29 +298,29 @@ def create_exploratory_2(mediator):
 
 def run_exploratory_2():
 	print('experiment: exploratory 2')
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_exploratory_2(med)
-	# med.evaluate_context(cxt)
-	# med.save()
+	exp_name = 'exploratory_exp_4'
+	# cxt = create_exploratory_2(exp_name)
+	# plume_mediator.evaluate_context(cxt)
+	# plume_mediator.save()
 
-	cxt = med['exploratory_exp_4']
-	# med.learn(cxt)
-	# med.save()
+	cxt = plume_mediator[exp_name]
+	# plume_mediator.learn(cxt)
+	# plume_mediator.save()
 
-	med.explain(cxt)
+	plume_mediator.explain(cxt)
 
 
 # EXPLORATORY EXPERIMENT Search Policy
 # zeta = 0.25
-def create_exploratory_search_policy(mediator):
+def create_exploratory_search_policy(exp_name):
 	resolution = []
-	resolution.append(mediator.feature_model.get_item('global-search-policy', include_children=False))
-	resolution.append(mediator.feature_model['population'])
-	resolution.append(mediator.feature_model['number-plumes'])
-	resolution.append(mediator.feature_model['wind-speed'])
-	resolution.append(mediator.feature_model['coverage-percentage'])
+	resolution.append(plume_mediator.features.get_item('global-search-policy', include_children=False))
+	resolution.append(plume_mediator.features['population'])
+	resolution.append(plume_mediator.features['number-plumes'])
+	resolution.append(plume_mediator.features['wind-speed'])
+	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	cxt = sls.Context(name='exploratory_exp_search_policy_5')
+	cxt = sls.Context(name=exp_name)
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
@@ -327,28 +334,28 @@ def create_exploratory_search_policy(mediator):
 
 def run_exploratory_search_policy():
 	print('experiment: exploratory search policy')
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_exploratory_search_policy(med)
-	# med.evaluate_context(cxt)
-	# med.save()
+	exp_name = 'exploratory_exp_search_policy_5'
+	# cxt = create_exploratory_search_policy(exp_name)
+	# plume_mediator.evaluate_context(cxt)
+	# plume_mediator.save()
 
-	cxt = med['exploratory_exp_search_policy_5']
-	# med.learn(cxt, algorithm='ann_hac')
-	# med.save()
+	cxt = plume_mediator[exp_name]
+	plume_mediator.learn(cxt, algorithm='ann_hac')
+	plume_mediator.save()
 
-	med.explain(cxt)
+	plume_mediator.explain(cxt)
 
 
 # TODO: experiment not completed due to scope of research
-def create_generalization_1(mediator):
+def create_generalization_1(exp_name):
 	resolution = []
-	resolution.append(mediator.feature_model['population'])
-	resolution.append(mediator.feature_model['coverage-data-decay'])
-	resolution.append(mediator.feature_model['wind-speed'])
-	resolution.append(mediator.feature_model['number-plumes'])
-	resolution.append(mediator.feature_model['coverage-percentage'])
+	resolution.append(plume_mediator.features['population'])
+	resolution.append(plume_mediator.features['coverage-data-decay'])
+	resolution.append(plume_mediator.features['wind-speed'])
+	resolution.append(plume_mediator.features['number-plumes'])
+	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	cxt = sls.Context(name='exploratory_exp_3_new')
+	cxt = sls.Context(name=exp_name)
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
@@ -363,24 +370,24 @@ def create_generalization_1(mediator):
 # TODO: experiment not completed due to scope of research
 def run_generalization_1():
 	print('experiment: generalization 1')
-	med = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-	# cxt = create_exploratory_3(med)
-	# med.evaluate_context(cxt)
-	# med.save()
+	exp_name = 'exploratory_exp_3_new'
+	# cxt = create_exploratory_3(exp_name)
+	# plume_mediator.evaluate_context(cxt)
+	# plume_mediator.save()
 
-	cxt = med['exploratory_exp_3_new']
-	# med.learn(cxt)
-	# med.save()
+	cxt = plume_mediator[exp_name]
+	# plume_mediator.learn(cxt)
+	# plume_mediator.save()
 
-	med.explain(cxt)
+	plume_mediator.explain(cxt)
 
 
 if __name__ == '__main__':
 	print('SLS: contaminant plume model')
-	# run_validation_1()
+	run_validation_1()
 	# run_validation_2()
 	# run_exploratory_1()
 	# run_exploratory_2()
-	run_exploratory_search_policy()
+	# run_exploratory_search_policy()
 	# run_generalization_1()
 	pass
