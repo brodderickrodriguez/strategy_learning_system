@@ -4,7 +4,7 @@
 
 import xcsr
 from . import xcsr_interface
-from . import ann_hac_interface
+from . import mlp_hac_interface
 
 
 # TODO: delete before publishing
@@ -13,10 +13,12 @@ class GenericConfiguration(xcsr.Configuration):
 	pass
 
 
-def learn(mediator, cxt, algorithm):
-	if algorithm == 'xcsr':
-		return xcsr_interface.learn(mediator, cxt)
-	elif algorithm == 'ann_hac':
-		return ann_hac_interface.learn(mediator, cxt)
-	else:
+_algorithm_interface_map = {'xcsr': xcsr_interface, 'mlp_hac': mlp_hac_interface}
+
+
+def learn(mediator, context, algorithm):
+	if algorithm not in _algorithm_interface_map:
 		raise ValueError('algorithm not known: {}'.format(algorithm))
+	else:
+		results = _algorithm_interface_map[algorithm].learn(mediator, context)
+		return results
