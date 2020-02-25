@@ -5,8 +5,8 @@
 import datetime
 
 
-def clean_dir_path(dir):
-	d = dir.replace('//', '/')
+def clean_dir_path(dir_path):
+	d = dir_path.replace('//', '/')
 	return d
 
 

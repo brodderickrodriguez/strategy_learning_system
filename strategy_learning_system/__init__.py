@@ -5,8 +5,8 @@
 
 from .context import Context
 from .model_mediator import ModelMediator
-from .feature_model import FeatureModel, Feature, FeatureType, Constraint, IntegerParameter, RealParameter, CategoricalParameter, TimeSeriesOutcome
-from . import explore
-from . import learn
-from . import explain
 from .rule import Rule
+from .feature_model import FeatureModel, Feature, FeatureType, Constraint, IntegerParameter, RealParameter, CategoricalParameter, TimeSeriesOutcome
+from . import explore, learn, explain
+
+

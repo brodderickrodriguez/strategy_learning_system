@@ -8,9 +8,6 @@ from .feature_model import FeatureType, Feature
 
 
 class Context:
-	RAW_EXPL_RES_PATH = '{}/{}_raw_exploratory_results.pkl'
-	RAW_LEAR_RES_PATH = '{}/{}_raw_learned_results.pkl'
-
 	def __init__(self, name=None):
 		dts = util.datetime_str()
 
