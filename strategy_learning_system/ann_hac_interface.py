@@ -98,14 +98,11 @@ def _make_rules(cxt, extrapolated_results, cluster_labels):
 	return rules
 
 
-def learn(mediator, cxt):
+def learn(_, cxt):
 	extrapolated_results = _extrapolate(cxt)
 
 	cluster_labels = _get_cluster_labels(extrapolated_results)
 
-
 	rules = _make_rules(cxt, extrapolated_results, cluster_labels)
-
-
 
 	return rules

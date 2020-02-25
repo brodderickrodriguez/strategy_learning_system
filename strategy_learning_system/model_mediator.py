@@ -5,7 +5,6 @@
 import os
 import pickle
 from . import model_synthesizer, learn, util, explain
-from .feature_model import CategoricalParameter
 from .context import Context
 
 
