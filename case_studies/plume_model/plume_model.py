@@ -4,22 +4,16 @@
 
 import strategy_learning_system as sls
 import numpy as np
-import sys
 from sklearn.metrics import auc
 
 
-# for bcr
-if sys.platform == 'darwin':
-	ROOT = '/Users/bcr/Dropbox/projects'
-	NETLOGO_HOME = '/Applications/NetLogo-6.0.4/'
-else:
-	ROOT = '/home/bcr/Dropbox/projects'
-	NETLOGO_HOME = '/home/bcr/apps/NetLogo 6.0.4/'
-
-MODEL_DIR = ROOT + '/code/scala/Plume-Model/Scala-Plume-Model/nlogo-model'
+NETLOGO_HOME = '/Applications/NetLogo-6.0.4/'
+MODEL_DIR = '/Users/bcr/Dropbox/projects/code/scala/Plume-Model/Scala-Plume-Model/nlogo-model'
 MODEL_FILE_NAME = 'plume_extended.nlogo'
 MEDIATOR_NAME = 'plume'
-SAVE_LOC = ROOT + '/data/sls_data'
+SAVE_LOC = '/Users/bcr/Dropbox/projects/data/sls_data'
+
+MEDIATOR_LOCATION = SAVE_LOC + '/' + MEDIATOR_NAME
 
 
 def define_feature_model():
@@ -195,10 +189,10 @@ def run_validation_1():
 	# plume_mediator.save()
 
 	cxt = plume_mediator[exp_name]
-	# plume_mediator.learn(cxt, algorithm='ann_hac')
+	# plume_mediator.learn(cxt, algorithm='mlp_hac')
 	# plume_mediator.save()
 
-	# plume_mediator.explain(cxt)
+	plume_mediator.explain(cxt)
 
 	print(plume_mediator.features)
 
@@ -234,7 +228,7 @@ def run_validation_2():
 	# plume_mediator.save()
 
 	cxt = plume_mediator[exp_name]
-	plume_mediator.learn(cxt, algorithm='ann_hac')
+	plume_mediator.learn(cxt, algorithm='xcsr')
 	# plume_mediator.save()
 
 	plume_mediator.explain(cxt)
@@ -340,8 +334,9 @@ def run_exploratory_search_policy():
 	# plume_mediator.save()
 
 	cxt = plume_mediator[exp_name]
-	plume_mediator.learn(cxt, algorithm='ann_hac')
+	plume_mediator.learn(cxt, algorithm='xcsr')
 	plume_mediator.save()
+
 
 	plume_mediator.explain(cxt)
 
@@ -384,10 +379,10 @@ def run_generalization_1():
 
 if __name__ == '__main__':
 	print('SLS: contaminant plume model')
-	run_validation_1()
+	# run_validation_1()
 	# run_validation_2()
 	# run_exploratory_1()
 	# run_exploratory_2()
-	# run_exploratory_search_policy()
+	run_exploratory_search_policy()
 	# run_generalization_1()
 	pass
