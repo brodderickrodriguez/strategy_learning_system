@@ -68,16 +68,13 @@ def _build_executable_model(mediator, context):
 	# set the NetLogo version
 	netlogo_version = mediator.netlogo['version']
 
-	# turn GUI off
-	gui = False
-
 	# create the NetLogoModel object
 	ema_model = NetLogoModel(name=name,
 							 wd=model_dir_path,
 							 model_file=model_file,
 							 netlogo_home=netlogo_home,
 							 netlogo_version=netlogo_version,
-							 gui=gui)
+							 gui=False)
 
 	# set the max run length of this model
 	ema_model.run_length = context.max_run_length
@@ -129,16 +126,7 @@ def _normalize_experiments(context, exp_df, digitize=True):
 
 			# if digitize is true, then bin each of the attributes in exp_df
 			if digitize:
-				# if isinstance(context.bins, int):
-				# 	bin_interval = 1.0 / context.bins
-				# 	exp_df[column_name] = (exp_df[column_name] / bin_interval).astype(int)
-				# else:
-				# 	exp_df[column_name] = np.digitize(exp_df[column_name], context.bins, right=True)
-
-				if isinstance(context.bins, int):
-					n_bins = context.bins
-				else:
-					n_bins = len(context.bins)
+				n_bins = len(context.bins)
 
 				interval = 1 / n_bins
 

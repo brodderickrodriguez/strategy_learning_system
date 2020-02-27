@@ -165,7 +165,7 @@ class ModelMediator:
 		# return the data for fast access
 		return results
 
-	def learn(self, cxt, algorithm='ann_hac'):
+	def learn(self, cxt, algorithm='mlp_hac'):
 		# make sure cxt is of time Context
 		assert isinstance(cxt, Context), '{} is not of type Context'
 
