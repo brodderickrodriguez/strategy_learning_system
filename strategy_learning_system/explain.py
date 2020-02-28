@@ -77,7 +77,7 @@ def plot_from_data_frame(context, data_frame):
 
 
 def plot_explored(context):
-	data = context.processed_exploratory_results
+	data = context.exploratory_data
 	plot_from_data_frame(context, data)
 
 
@@ -104,7 +104,7 @@ def plot_learned(context):
 	x_values, y_values, model, environmental = _get_axis_labels(context)
 	x_dict = {x: [] for x in x_values}
 	structured_data = {y: copy.deepcopy(x_dict) for y in y_values[::-1]}
-	rules = sorted(context.processed_learned_data)[::-1]
+	rules = sorted(context.learned_data)[::-1]
 	context_bins = list(context.bins)
 
 	for rule in rules:

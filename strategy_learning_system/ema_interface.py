@@ -6,7 +6,7 @@ import ema_workbench
 from ema_workbench.connectors.netlogo import NetLogoModel
 from ema_workbench import ema_logging, MultiprocessingEvaluator
 import numpy as np
-from .feature_model import CategoricalParameter
+from .feature import CategoricalParameter
 
 
 def _determine_parameters(mediator, context):
@@ -98,7 +98,7 @@ def _get_exploratory_results(mediator, context):
 
 	with MultiprocessingEvaluator(ema_model,
 								  n_processes=context.num_processes,
-								  maxtasksperchild=context.tasks_per_subchild) as evaluator:
+								  maxtasksperchild=4) as evaluator:
 		# run model using EMA
 		results = evaluator.perform_experiments(context.num_experiments)
 

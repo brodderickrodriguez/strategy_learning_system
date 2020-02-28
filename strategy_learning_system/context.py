@@ -2,33 +2,26 @@
 # Auburn University - CSSE
 # 25 Aug. 2019
 
-from . import util
 import numpy as np
 from .feature_model import FeatureType, Feature
 
 
 class Context:
-	def __init__(self, name=None):
-		dts = util.datetime_str()
-
-		self.name = name if name is not None else dts
-		self.created_on = dts
+	def __init__(self, name):
+		self.name = name
 		self.resolution_model = []
-		self.all_parameters = []
-		self.data_path = None
 		self.bins = np.linspace(0.0, 1.0, 3)
 
 		self.num_experiments = 0
 		self.num_replications = 0
 		self.max_run_length = 0
 		self.num_processes = 1
-		self.tasks_per_subchild = 4
 
-		self.processed_exploratory_results = None
-		self.processed_learned_data = None
+		self.exploratory_data = None
+		self.learned_data = None
 
 	def __str__(self):
-		return 'Context: {}'.format(self.name)
+		return 'Context: %s' % self.name
 
 	def __repr__(self):
 		return self.__str__()
@@ -45,12 +38,7 @@ class Context:
 
 		features = self.collapsed_resolution_model()
 		frm = _look(features)
-
-		if frm is not None:
-			return frm
-
-		apl = _look(self.all_parameters)
-		return apl
+		return frm
 
 	def collapsed_resolution_model(self):
 		features = []
