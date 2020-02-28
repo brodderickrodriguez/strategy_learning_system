@@ -129,7 +129,7 @@ def create_plume_mediator():
 	mediator.netlogo = netlogo_home_dir_path, netlogo_version
 	mediator.feature_model = define_feature_model()
 	mediator.save_location = SAVE_LOC
-	# mediator.save()
+	mediator.save()
 	return mediator
 
 
@@ -149,8 +149,8 @@ def area_under_curve(outcome_keys, outcomes):
 	return rewards
 
 
-plume_mediator = create_plume_mediator()
-# plume_mediator = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
+# plume_mediator = create_plume_mediator()
+plume_mediator = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
 
 
 def create_test_bench(exp_name):
@@ -165,7 +165,7 @@ def create_test_bench(exp_name):
 	cxt.resolution_model = resolution
 
 	cxt.bins = np.linspace(0, 1, 5)
-	cxt.num_experiments = 10
+	cxt.num_experiments = 5
 	cxt.num_replications = 1
 	cxt.max_run_length = 10
 	cxt.num_processes = 11
@@ -174,15 +174,14 @@ def create_test_bench(exp_name):
 
 def run_test_bench():
 	print('experiment: validation 1')
-	exp_name = 'test_0'
+	exp_name = 'test_1'
 	cxt = create_test_bench(exp_name)
 	plume_mediator.explore(cxt)
 	# plume_mediator.save()
 
-	print(plume_mediator)
-
 	# cxt = plume_mediator[exp_name]
-	plume_mediator.learn(cxt, algorithm='mlp_hac')
+
+	# plume_mediator.learn(cxt, algorithm='mlp_hac')
 	# plume_mediator.save()
 
 	plume_mediator.explain(cxt)

@@ -6,6 +6,7 @@ import os
 import pickle
 from . import explore, learn, explain
 from .context import Context
+import warnings
 
 
 class ModelMediator:
@@ -30,7 +31,7 @@ class ModelMediator:
 		return self._contexts[key]
 
 	def __setitem__(self, key):
-		raise Warning('this operation is not supported')
+		warnings.warn('this operation is not supported')
 
 	@property
 	def model(self):
@@ -88,31 +89,31 @@ class ModelMediator:
 
 		self._save_location = save_dir
 
+	def remove_context(self, cxt_name):
+		if cxt_name in self._contexts:
+			del self._contexts[cxt_name]
+		else:
+			warnings.warn('Context %s not found' % cxt_name)
+
 	def save(self):
 		# make sure the user has specified the save_location before saving
 		assert self._save_location, 'first specify Mediator.save_location'
 
-		root_dir_path = '%s/%s/' % (self.save_location, self.name)
-		meta_data_path = root_dir_path + 'meta_data.pkl'
-
-		# create root data directory
-		if not os.path.exists(root_dir_path):
-			os.mkdir(root_dir_path)
+		root_dir_file_path = '%s/%s.pkl' % (self.save_location, self.name)
 
 		# save the meta data
-		with open(meta_data_path, 'wb') as f:
+		with open(root_dir_file_path, 'wb') as f:
 			pickle.dump(self, f)
 
 	@staticmethod
 	def load(root_dir_path):
-		# make sure root_dir_path is valid
-		assert os.path.exists(root_dir_path), '{} does not exist'.format(root_dir_path)
+		root_dir_file_path = '%s.pkl' % root_dir_path
 
-		# define the path to a Mediator's meta_data
-		meta_data_path = root_dir_path + '/meta_data.pkl'
+		# make sure root_dir_path is valid
+		assert os.path.exists(root_dir_file_path), '%s does not exist' % root_dir_path
 
 		# load meta data file
-		with open(meta_data_path, 'rb') as f:
+		with open(root_dir_file_path, 'rb') as f:
 			return pickle.load(f)
 
 	def explore(self, cxt):
@@ -127,6 +128,9 @@ class ModelMediator:
 
 		# make sure the user has specified something in the Context.resolution_model
 		assert len(cxt.resolution_model) > 0, '{} has resolution_model to evaluate'.format(cxt.name)
+
+		if cxt.exploratory_data is not None:
+			warnings.warn('Overriding explored data for Context %s' % cxt.name)
 
 		# add the context to this mediator
 		self._contexts[cxt.name] = cxt
@@ -147,6 +151,9 @@ class ModelMediator:
 		# make sure the context has been explored
 		assert cxt.exploratory_data is not None, 'this context has not been explored'
 
+		if cxt.learned_data is not None:
+			warnings.warn('Overriding learned data for Context %s' % cxt.name)
+
 		# call the learning module and collect the learned rules
 		rules = learn.learn(self, cxt, algorithm)
 
@@ -163,9 +170,9 @@ class ModelMediator:
 		if cxt.exploratory_data is not None:
 			explain.plot_explored(cxt)
 		else:
-			raise Warning('%s has not been explored' % cxt.name)
+			warnings.warn('%s has not been explored' % cxt.name)
 
 		if cxt.learned_data is not None:
 			explain.plot_learned(cxt)
 		else:
-			raise Warning('%s has no learned data' % cxt.name)
+			warnings.warn('%s has no learned data' % cxt.name)
