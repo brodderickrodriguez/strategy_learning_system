@@ -105,7 +105,7 @@ def _get_exploratory_results(mediator, context):
 		return results
 
 
-def _normalize_experiments(context, exp_df, digitize=True):
+def _normalize_experiments(context, exp_df):
 	# for each column/uncertainty
 	for column_name in exp_df:
 		# grab the name of the param we are working on
@@ -124,20 +124,17 @@ def _normalize_experiments(context, exp_df, digitize=True):
 			col = exp_df[column_name]
 			col = (col - param.lower_bound) / (param.upper_bound - param.lower_bound)
 
-			# if digitize is true, then bin each of the attributes in exp_df
-			if digitize:
-				n_bins = len(context.bins)
+			n_bins = len(context.bins)
+			interval = 1 / n_bins
 
-				interval = 1 / n_bins
+			# this "bins" elements in the array similar to np.digitize
+			# except here we are setting the last bin as inclusive, inclusive
+			for i in range(n_bins):
+				lb = i * interval
+				ub = (i + 1) * interval
+				col[(lb <= col) & (col < ub)] = i
 
-				# this "bins" elements in the array similar to np.digitize
-				# except here we are setting the last bin as inclusive, inclusive
-				for i in range(n_bins):
-					lb = i * interval
-					ub = (i + 1) * interval
-					col[(lb <= col) & (col < ub)] = i
-
-				exp_df[column_name] = col
+			exp_df[column_name] = col
 
 	return exp_df
 
