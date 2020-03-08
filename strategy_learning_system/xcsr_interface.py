@@ -3,8 +3,7 @@
 # 24 Aug. 2019
 
 import xcsr
-from . import util
-from .feature_model import IntegerParameter
+from .feature import IntegerParameter
 from .rule import Rule
 import numpy as np
 import shutil
@@ -224,7 +223,7 @@ def learn(mediator, cxt):
 	save_loc = '{}/{}'.format(mediator.save_location, mediator.name)
 	feature_model = mediator.feature_model
 	resolution_model = cxt.collapsed_resolution_model()
-	exploratory_data = cxt.processed_exploratory_results
+	exploratory_data = cxt.exploratory_data
 
 	data = _parse_data(feature_model=feature_model,
 					   resolution_model=resolution_model,

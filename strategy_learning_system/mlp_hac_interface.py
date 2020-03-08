@@ -8,12 +8,12 @@ import pandas as pd
 from sklearn.neural_network import MLPRegressor
 from sklearn.cluster import AgglomerativeClustering
 from .rule import Rule
-from .feature_model import IntegerParameter, CategoricalParameter
+from .feature import IntegerParameter, CategoricalParameter
 
 
 
 def _make_net_data(cxt):
-	exploratory_data = cxt.processed_exploratory_results
+	exploratory_data = cxt.exploratory_data
 
 	X_train = exploratory_data.drop('rho', axis=1).to_numpy()
 	y_train = exploratory_data['rho'].to_numpy()
@@ -26,7 +26,7 @@ def _make_net_data(cxt):
 
 
 def _extrapolate(cxt):
-	exploratory_data = cxt.processed_exploratory_results
+	exploratory_data = cxt.exploratory_data
 	feature_names = exploratory_data.columns[:-1]
 	X_train, y_train, X_test = _make_net_data(cxt)
 
@@ -68,7 +68,6 @@ def make_single_rule(extrapolated_results, s, f, env_uncertainty, mod_uncertaint
 
 	rule = Rule()
 	rule.outcome = np.mean(extrapolated_results.iloc[s:f]['rho'])
-
 
 	for eu in env_uncertainty:
 		coded_predicate, explainable_predicate = _get_predicates(eu)

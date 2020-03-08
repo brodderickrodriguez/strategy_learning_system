@@ -2,15 +2,8 @@
 # Auburn University - CSSE
 # 24 Aug. 2019
 
-import xcsr
 from . import xcsr_interface
 from . import mlp_hac_interface
-
-
-# TODO: delete before publishing
-# due to pickling this has to be here
-class GenericConfiguration(xcsr.Configuration):
-	pass
 
 
 _algorithm_interface_map = {'xcsr': xcsr_interface, 'mlp_hac': mlp_hac_interface}
