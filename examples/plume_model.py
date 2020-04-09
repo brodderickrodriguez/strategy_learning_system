@@ -2,14 +2,17 @@
 # Auburn University - CSSE
 # 27 Aug. 2019
 
+'''
+NOTE to the user:
+- The readme contains steps on how to configure SLS to run this experiment.
+- Make sure the directory and file paths match your system. 
+- Read the comments in __name__ == '__main__' to experiment with SLS correctly.
+- Thanks!
+'''
+
 import strategy_learning_system as sls
 import numpy as np
 from sklearn.metrics import auc
-
-
-MEDIATOR_NAME = 'plume2'
-SAVE_LOC = '/Users/bcr/Dropbox/projects/data/sls_data/'
-
 
 
 def define_feature_model():
@@ -118,17 +121,14 @@ def define_feature_model():
 	return feature_model
 
 
-def create_plume_mediator():
-	plume_model_dir_path = '/Users/bcr/Dropbox/projects/code/scala/Plume-Model/Scala-Plume-Model/nlogo-model/'
-	plume_model_file_name = 'plume_extended.nlogo'
-	netlogo_home_dir_path = '/Applications/NetLogo-6.0.4/'
-	netlogo_version = '6.0'
-
-	mediator = sls.ModelMediator(name=MEDIATOR_NAME)
-	mediator.model = plume_model_dir_path, plume_model_file_name
-	mediator.netlogo = netlogo_home_dir_path, netlogo_version
+def create_plume_mediator(model_path, model_name, 
+							netlogo_path, netlogo_v, 
+							mediator_path, mediator_name):
+	mediator = sls.ModelMediator(name=mediator_name)
+	mediator.model = model_path, model_name
+	mediator.netlogo = netlogo_path, netlogo_v
 	mediator.feature_model = define_feature_model()
-	mediator.save_location = SAVE_LOC
+	mediator.save_location = mediator_path
 	mediator.save()
 	return mediator
 
@@ -149,18 +149,13 @@ def area_under_curve(outcome_keys, outcomes):
 	return rewards
 
 
-# plume_mediator = create_plume_mediator()
-plume_mediator = sls.ModelMediator.load('{}/{}'.format(SAVE_LOC, MEDIATOR_NAME))
-
-
-def create_test_bench(exp_name):
+def create_validation_1(plume_mediator):
 	resolution = []
 	resolution.append(plume_mediator.features['population'])
 	resolution.append(plume_mediator.features['number-plumes'])
-	resolution.append(plume_mediator.feature_model.get_item('global-search-policy', include_children=False))
 	resolution.append(plume_mediator.features['coverage-percentage'])
 
-	cxt = sls.Context(name=exp_name)
+	cxt = sls.Context(name='validation_1')
 	cxt.reward_function = area_under_curve
 	cxt.resolution_model = resolution
 
@@ -172,24 +167,72 @@ def create_test_bench(exp_name):
 	return cxt
 
 
-def run_test_bench():
-	print('experiment: validation 1')
-	exp_name = 'test_1'
-	cxt = create_test_bench(exp_name)
+if __name__ == '__main__':
+	# the path to the .nlogo model
+	model_path = './contaminant_plume_model/Scala-Plume-Model/nlogo-model/'
+	
+	# the name of the .nlogo model
+	model_name = 'plume_extended.nlogo'
+
+	# the path to NetLogo. Note: make sure your NetLogo version is reflected here
+	netlogo_path = '/Applications/NetLogo-6.0.4/'
+
+	# the version of netlogo as a string. Specify only the major release version
+	# I.e, '6.0', '7.0', etc.
+	netlogo_version = '6.0'
+
+	# the path to the mediator object that SLS will create and manage
+	mediator_save_path = './experiment_data/'
+
+	# the name of the mediator
+	mediator_name = 'plume'
+	
+	# create the mediator object for the contaminant plume model
+	# This line needs to be executed only once. It should be commented out after.
+	# If not, it will overwrite any existing experiment data.
+	plume_mediator = create_plume_mediator(model_path, model_name, 
+											netlogo_path, netlogo_version, 
+											mediator_save_path, mediator_name)
+
+	# loads a previously created mediator
+	# plume_mediator = sls.ModelMediator.load('{}/{}'.format(mediator_save_path, mediator_name))
+
+	# create a context for a single experiment.
+	# If you are performing multiple experiments, each experiment 
+	# requires its own context.
+	#
+	# This is the process of experimenting with a single hypothesis about
+	# the model.
+	#
+	# This line needs to be executed only once and should be commented
+	# out afterwards. Otherwise, it will overwrite existing data. 
+	cxt = create_validation_1(plume_mediator)
+
+	# If you are experimenting with a context over multiple python executions,
+	# you can load a previously created experiment using this line.
+	# Note: a context needs to (at least) be explored before it will be saved.
+	# cxt = plume_mediator['validation_1']
+
+	# Execute the modeling via explroation and EMA 
+	# This is the phase where we explicity evaluate many model instances 
+	# and collect their performance using AUC
 	plume_mediator.explore(cxt)
-	# plume_mediator.save()
 
-	# cxt = plume_mediator[exp_name]
+	# After exploration, we learn from the exploratory data. 
+	# This is the processes of learning the patterns, and generating 
+	# rules that explain the larger ensemble.
+	# For this task, there are two algorithms: XCSR and MLP+HAC
+	# plume_mediator.learn(cxt, algorithm='xcsr')
+	plume_mediator.learn(cxt, algorithm='mlp_hac')
 
-	# plume_mediator.learn(cxt, algorithm='mlp_hac')
-	# plume_mediator.save()
-
+	# Next we can explain the context given our experiment hypothesis.
+	# This will generate two heats maps: one for the explored data
+	# and another for the learned rules.
 	plume_mediator.explain(cxt)
 
+	# Lastly, we save the mediator and its contexts.
+	plume_mediator.save()
 
-
-
-
-run_test_bench()
-
-
+	print(plume_mediator, cxt)
+	print('exploratory data:\n', cxt.exploratory_data)
+	print('rules:\n', cxt.learned_data[:3])
