@@ -8,18 +8,18 @@ Requirements:
 * [NetLogo](https://ccl.northwestern.edu/netlogo/download.shtml) 6
 * Python 3.7+
 
-Quick install: [quick_install.sh](https://github.com/brodderickrodriguez/strategy_learning_system/blob/master/quick_install.py)
+Installation: 
+* Quick: [quick_install.sh](https://github.com/brodderickrodriguez/strategy_learning_system/blob/master/quick_install.py)
+* Manual:
+  * `git clone https://github.com/brodderickrodriguez/strategy_learning_system.git`
+  * `cd /path/to/strategy_learning_system`
+  * `python3 -m venv .env`
+  * `source .env/bin/activate`
+  * `pip3 install -r requirements.txt`
+* To experiment with the Contaminant Plume Model:
+  * Above steps
+  * `cd examples; git clone https://github.com/brodderickrodriguez/contaminant_plume_model.git`
 
-Manual Installation:
-* `git clone https://github.com/brodderickrodriguez/strategy_learning_system.git`
-* `cd /path/to/strategy_learning_system`
-* `python3 -m venv .env`
-* `source .env/bin/activate`
-* `pip3 install -r requirements.txt`
-
-To experiment with the Contaminant Plume Model:
-* All of the steps above
-* `cd examples; git clone https://github.com/brodderickrodriguez/contaminant_plume_model.git`
 
 The following code snippet is for the Contaminant Plume Model. It can be found in [`./examples/plume_model.py`](https://github.com/brodderickrodriguez/strategy_learning_system/blob/master/examples/plume_model.py).
 
