@@ -19,7 +19,7 @@ To experiment with the Contaminant Plume Model:
 * All of the steps above
 * `cd examples; git clone https://github.com/brodderickrodriguez/contaminant_plume_model.git`
 
-The following code snippet is for the Contaminant Plume Model. It can be found in `./examples/plume_model.py`.
+The following code snippet is for the Contaminant Plume Model. It can be found in [`./examples/plume_model.py`](https://github.com/brodderickrodriguez/strategy_learning_system/blob/master/examples/plume_model.py).
 
     # the path to the .nlogo model
 	model_path = './contaminant_plume_model/Scala-Plume-Model/nlogo-model/'
