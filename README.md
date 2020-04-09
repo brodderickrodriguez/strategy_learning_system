@@ -8,7 +8,9 @@ Requirements:
 * [NetLogo](https://ccl.northwestern.edu/netlogo/download.shtml) 6
 * Python 3.7+
 
-Installation:
+Quick install: [quick_install.sh](https://github.com/brodderickrodriguez/strategy_learning_system/blob/master/quick_install.py)
+
+Manual Installation:
 * `git clone https://github.com/brodderickrodriguez/strategy_learning_system.git`
 * `cd /path/to/strategy_learning_system`
 * `python3 -m venv .env`
