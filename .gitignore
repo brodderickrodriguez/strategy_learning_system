@@ -107,4 +107,7 @@ venv.bak/
 
 .idea
 
+sls_data
+experiment_data
+
 tmp*
